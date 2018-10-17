@@ -335,7 +335,7 @@ void DSA_controller::ControlStep()
       if ( IsAtTarget() )
 	{
 	  //argos::LOG << "RETURN_TO_SEARCH: Pattern Point" << std::endl;
-	  SetIsHeadingToNest(false);
+      SetIsHeadingToNest(false);
 	  SetTarget(ReturnPatternPosition);
 	  DSA = SEARCHING;
 	}

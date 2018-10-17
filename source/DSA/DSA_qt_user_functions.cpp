@@ -36,8 +36,8 @@ void DSA_qt_user_functions::DrawOnRobot(CFootBotEntity& entity) {
          * See also the description in
          * $ argos3 -q foot-bot
          */
-        GetQTOpenGLWidget().renderText(0.0, 0.0, 0.5,             // position
-                                    entity.GetId().c_str()); // text
+//        GetQTOpenGLWidget().renderText(0.0, 0.0, 0.5,             // position
+//                                    entity.GetId().c_str()); // text
         /* Restore face culling */
         glEnable(GL_CULL_FACE);
         /* Restore lighting */

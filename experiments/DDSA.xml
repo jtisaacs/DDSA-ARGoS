@@ -70,10 +70,14 @@
   <loop_functions library = "build/source/DSA/libDSA_loop_functions"
                   label   = "DSA_loop_functions">
 
-    <DDSA PrintFinalScore = "1" FoodItemCount = "256"
-	  FoodDistribution = "2"
-	  NestRadius = "0.25"
-	  />
+<!--    <DDSA PrintFinalScore = "1" FoodItemCount = "256"-->
+<!--      FoodDistribution = "2"-->
+<!--      NestRadius = "0.25"-->
+<!--      />-->
+  <DDSA PrintFinalScore = "1" FoodItemCount = "256" FoodBoundsWidth="10" FoodBoundsHeight="10"
+  FoodDistribution = "2"
+  NestRadius = "0.25"
+  />
 
   </loop_functions>
         

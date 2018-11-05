@@ -29,7 +29,7 @@ class DSA_qt_user_functions : public CQTOpenGLUserFunctions {
         void DrawNest();
         void DrawFood();
         void DrawTargetRays();
-
+        void Draw(CFootBotEntity& c_entity);
         DSA_loop_functions& loopFunctions;
 
 };

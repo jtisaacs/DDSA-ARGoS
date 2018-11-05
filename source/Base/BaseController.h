@@ -33,47 +33,20 @@ class BaseController : public argos::CCI_Controller {
         void Move();
         bool Wait();
         void Wait(size_t wait_time_in_seconds);
+    
+        void PushMovement(size_t moveType, argos::Real moveSize);
+    
+        void SetMovement();
+        void SetStopMovement();
 
         /*  time calculation functions */
         size_t SimulationTick();
         size_t SimulationTicksPerSecond();
         argos::Real SimulationSecondsPerTick();
         argos::Real SimulationTimeInSeconds();
-
-	void SetIsHeadingToNest(bool n);
-
-        bool IsAtTarget();
-
-    protected:
-
-	argos::CRandom::CRNG* RNG;
-
-	unsigned int collision_counter;
-	float DestinationNoiseStdev; // for introducing error in destination positions
-	float PositionNoiseStdev; // for introducing error in current position
-
-        size_t WaitTime;
-
-	argos::CRadians TargetAngleTolerance;
-	argos::Real NestDistanceTolerance;
-	argos::CRadians NestAngleTolerance;
-        argos::Real TargetDistanceTolerance;
-        argos::Real SearchStepSize;
-
-        argos::CRange<argos::Real> ForageRangeX;
-        argos::CRange<argos::Real> ForageRangeY;
-        argos::CRange<argos::Real> GoStraightAngleRangeInDegrees;
-
-    	//  base controller movement parameters
-    	argos::Real RobotForwardSpeed;
-    	argos::Real RobotRotationSpeed;
-    	argos::Real TicksToWaitWhileMoving;
-
-        // foot-bot components: sensors and actuators
-        argos::CCI_PositioningSensor* compassSensor;
-        argos::CCI_DifferentialSteeringActuator* wheelActuator;
-        argos::CCI_FootBotProximitySensor* proximitySensor;
-
+    
+    public:
+        bool path_planning_activated;
         // controller state variables
         enum MovementState {
             STOP    = 0,
@@ -82,22 +55,126 @@ class BaseController : public argos::CCI_Controller {
             FORWARD = 3,
             BACK    = 4
         } CurrentMovementState;
-
-	/* movement definition variables */
-        struct Movement {
-            size_t type;
-            argos::Real magnitude;
+    
+        struct RobotData{
+            argos::CVector2 TargetPosition;
+            argos::CVector2 StartPosition;
+            argos::CVector2 TargetWaypoint;
+            argos::CVector2 StartWaypoint;
+            argos::CVector2 AddedPoint;
+            argos::UInt16 id_robot;
+            argos::Real Priority;
+            argos::UInt16 WaypointCounter;
+            argos::Real fBaseAngularWheelSpeed;
+            argos::Real fLinearWheelSpeed;
+            bool GoingToNest;
+            argos::Real InitialOrientation;
+            argos::UInt16 Intial_TurningWaitTime;
+            argos::UInt16 StopTurningTime;
+            bool Checked;
+            bool Waypoint_Added;
+            bool WaypointReached;
+            bool CollinearFlag;
+            bool pathcheck;
+            argos::CDegrees HeadingAngle;
+            std::stack<argos::CVector2>WaypointStack;
         };
+    
+        struct IntersectionData{
+            argos::UInt16 Robot_ID_Intersectingwith;
+            bool Intersection_flag;
+            argos::CVector2 IntersectionPoint;
+        };
+    
+        /*
+         * Returns the robot data
+         */
+        inline RobotData& GetRobotData() {
+            return stRobotData;
+        }
+    
+        /*
+         * Returns the intersection data of the robot
+         */
+        inline IntersectionData& GetIntersectionData() {
+            return st_IntersectionData;
+        }
 
-	Movement previous_movement;
-	argos::CVector2 previous_pattern_position;
+        void SetIsHeadingToNest(bool n);
+
+        bool IsAtTarget();
+    
+        inline void ActivatePathPlanning(){
+            path_planning_activated = true;
+        }
+    void SetMovementState(size_t state);
+    
+public:
+    RobotData stRobotData;
+    
+     //movement definition variables
+    
+    struct Movement {
+        size_t type;
+        argos::Real magnitude;
+    };
+
+    Movement previous_movement;
+    argos::CVector2 previous_pattern_position;
+
+    std::stack<Movement> MovementStack;
+    
+    IntersectionData st_IntersectionData;
+//    argos::Real RobotForwardSpeed;
+    size_t WaitTime;
+
+    
+    protected:
+
+	argos::CRandom::CRNG* RNG;
+
+	unsigned int collision_counter;
+	float DestinationNoiseStdev; // for introducing error in destination positions
+	float PositionNoiseStdev; // for introducing error in current position
+
+    
+
+    argos::CRadians TargetAngleTolerance;
+    argos::Real NestDistanceTolerance;
+    argos::CRadians NestAngleTolerance;
+    argos::Real TargetDistanceTolerance;
+    argos::Real SearchStepSize;
+
+    argos::CRange<argos::Real> ForageRangeX;
+    argos::CRange<argos::Real> ForageRangeY;
+    argos::CRange<argos::Real> GoStraightAngleRangeInDegrees;
+
+    //  base controller movement parameters
+    argos::Real RobotForwardSpeed;
+    argos::Real RobotRotationSpeed;
+    argos::Real TicksToWaitWhileMoving;
+
+    // foot-bot components: sensors and actuators
+    argos::CCI_PositioningSensor* compassSensor;
+    argos::CCI_DifferentialSteeringActuator* wheelActuator;
+    argos::CCI_FootBotProximitySensor* proximitySensor;
+
+    
+
+/* movement definition variables */
+//    struct Movement {
+//        size_t type;
+//        argos::Real magnitude;
+//    };
+//
+//    Movement previous_movement;
+//    argos::CVector2 previous_pattern_position;
 	
-	std::stack<Movement> MovementStack;
+//    std::stack<Movement> MovementStack;
 
     private:
 
         argos::CLoopFunctions& LF;
-
         argos::CVector3 StartPosition;
         argos::CVector2 TargetPosition;
 
@@ -106,18 +183,21 @@ class BaseController : public argos::CCI_Controller {
 
         /* private navigation helper functions */
         void SetNextMovement();
-        void SetTargetAngleDistance(argos::Real newAngleToTurnInDegrees);
-        void SetTargetTravelDistance(argos::Real newTargetDistance);
+        argos::Real SetTargetAngleDistance(argos::Real newAngleToTurnInDegrees);
+        argos::Real SetTargetTravelDistance(argos::Real newTargetDistance);
         void SetLeftTurn(argos::Real newTargetAngle);
         void SetRightTurn(argos::Real newTargetAngle);
         void SetMoveForward(argos::Real newTargetDistance);
         void SetMoveBack(argos::Real newTargetDistance);
-        void PushMovement(size_t moveType, argos::Real moveSize);
+//        void PushMovement(size_t moveType, argos::Real moveSize);
         void PopMovement();
+    
 
         /* collision detection functions */
         bool CollisionDetection();
         argos::CVector2 GetCollisionVector();
+
+        argos::UInt16 GetInitial_TurningWaitTime(BaseController::RobotData stRobotData);
 
 	bool heading_to_nest;
 

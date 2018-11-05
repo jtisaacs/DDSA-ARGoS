@@ -9,6 +9,7 @@ DSA_qt_user_functions::DSA_qt_user_functions() :
 {
     RegisterUserFunction<DSA_qt_user_functions, CFootBotEntity>(&DSA_qt_user_functions::DrawOnRobot);
     RegisterUserFunction<DSA_qt_user_functions, CFloorEntity>(&DSA_qt_user_functions::DrawOnArena);
+//    RegisterUserFunction<DSA_qt_user_functions, CFootBotEntity>(&DSA_qt_user_functions::Draw);
 }
 
 /*****
@@ -19,7 +20,7 @@ void DSA_qt_user_functions::DrawOnRobot(CFootBotEntity& entity) {
     DSA_controller& c = dynamic_cast<DSA_controller&>(entity.GetControllableEntity().GetController());
 
     if(c.IsHoldingFood() == true) {
-        DrawCylinder(CVector3(0.0, 0.0, 0.3), CQuaternion(), loopFunctions.FoodRadius, 0.025, CColor::BLACK);
+        DrawCylinder(CVector3(0.0, 0.0, 0.2), CQuaternion(), loopFunctions.FoodRadius, 0.025, CColor::BLACK);
     }
 
     if(loopFunctions.DrawIDs == 1) {
@@ -38,6 +39,8 @@ void DSA_qt_user_functions::DrawOnRobot(CFootBotEntity& entity) {
          */
 //        GetQTOpenGLWidget().renderText(0.0, 0.0, 0.5,             // position
 //                                    entity.GetId().c_str()); // text
+        DrawText(CVector3(0.0, 0.0, 0.6),   // position
+                 entity.GetId().c_str()); // text
         /* Restore face culling */
         glEnable(GL_CULL_FACE);
         /* Restore lighting */
@@ -104,5 +107,16 @@ void DSA_qt_user_functions::DrawTargetRays() {
         }
     //}
 }
+
+//void DSA_qt_user_functions::Draw(CFootBotEntity& c_entity) {
+    /* The position of the text is expressed wrt the reference point of the footbot
+     * For a foot-bot, the reference point is the center of its base.
+     * See also the description in
+     * $ argos3 -q foot-bot
+     */
+//    DrawText(CVector3(0.0, 0.0, 0.1),   // position
+//             c_entity.GetId().c_str()); // text
+//}
+
 
 REGISTER_QTOPENGL_USER_FUNCTIONS(DSA_qt_user_functions, "DSA_qt_user_functions")

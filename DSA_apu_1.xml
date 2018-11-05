@@ -57,6 +57,7 @@
 		  SearchStepSize          = "0.08"
                   RobotForwardSpeed       = "16.0"
                   RobotRotationSpeed      = "8.0"
+<!--          DestinationNoiseStdev = "2.0"-->
           DestinationNoiseStdev = "0.0"
           PositionNoiseStdev = "0.0"
 		  ResultsDirectoryPath = "results/"/>
@@ -88,7 +89,7 @@
       <position method="grid"
                 center="0.0, 0.0, 0.0"
                 distances="0.2, 0.2, 0.0"
-                layout="2, 5, 1" />
+                layout="2, 3, 1" />
       <orientation method="constant" values="0.0, 0.0, 0.0" />
       <entity quantity="6" max_trials="100">
         <foot-bot id="DSA_">

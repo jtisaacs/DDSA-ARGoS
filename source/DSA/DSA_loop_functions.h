@@ -5,6 +5,7 @@
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 #include <argos3/core/simulator/entity/floor_entity.h>
 #include <source/DSA/DSA_controller.h>
+#include <source/Base/BaseController.h>
 
 using namespace argos;
 using namespace std;
@@ -30,15 +31,47 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         void SetFoodDistribution();
 
 	argos::Real getSimTimeInSeconds();
-
+    
+    argos::Real CalculateDistance(argos::CVector2 cPosition1, argos::CVector2 cPosition2);
+    argos::UInt16 GetTicksToWait(argos::Real dist, argos::Real speed);
+    
+    void Find_Intersection(BaseController::RobotData& ptr1, BaseController::RobotData& ptr2,
+                           BaseController::IntersectionData& ptr3);
+    
+    void IntersectionCollisionCheck(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+                                    BaseController::IntersectionData &ptr3);
+    
+    void CheckCollinearity(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+                           BaseController::IntersectionData &ptr3);
+    
+    void CheckRobotHeadingCourse(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+                                 BaseController::IntersectionData &ptr3);
+    
+    argos::Real CalculateAngleBetweenRobotCourse(BaseController::RobotData& ptr1,
+                                                 BaseController::RobotData &ptr2);
+    
+    void AddNewWayPoint(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+                        argos::UInt8 ptrIndex);
+    
+    void CalculateWaitTime(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2);
+    
+    
+    
+    public:
+        bool FirstCheck;
+        argos::CRandom::CRNG* m_pcRNG;
+        argos::UInt16 SimulatorTicksperSec;
+        argos::UInt16 stoptime1;
+        argos::UInt16 stoptime2;
+    
 	protected:
 
 	void setScore(double s);
 
         argos::CRandom::CRNG* RNG;
 
-	size_t sim_time;
-	size_t ticks_per_second;
+        size_t sim_time;
+        size_t ticks_per_second;
         size_t MaxSimTime;
         size_t ResourceDensityDelay;
         size_t RandomSeed;
@@ -67,8 +100,8 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         argos::Real NestElevation;
         argos::Real SearchRadiusSquared;
 
-	argos::Real FoodBoundsWidth;
-	argos::Real FoodBoundsHeight;
+        argos::Real FoodBoundsWidth;
+        argos::Real FoodBoundsHeight;
 	
         /* list variables for food & pheromones */
         std::vector<argos::CVector2> FoodList;
@@ -81,20 +114,34 @@ class DSA_loop_functions : public argos::CLoopFunctions {
 
         argos::CRange<argos::Real>   ForageRangeX;
         argos::CRange<argos::Real>   ForageRangeY;
-
+    
     private:
 
         /* private helper functions */
         void RandomFoodDistribution();
         void ClusterFoodDistribution();
         void PowerLawFoodDistribution();
-	void FindClusterLengthWidth();
+        void FindClusterLengthWidth();
         bool IsOutOfBounds(argos::CVector2 p, size_t length, size_t width);
         bool IsCollidingWithNest(argos::CVector2 p);
         bool IsCollidingWithFood(argos::CVector2 p);
+        void Check_GoingToNest(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2);
 
 	double score;
 	int PrintFinalScore;
+    argos::UInt16 Result_Checked;
+    bool update_movement_state;
+    bool RobotReachedWayPoint;
+    bool NewWayPointAdded;
+    
+    const argos::Real Safedistance = 0.5;
+    const argos::Real MaxLinearSpeed = 16.0f;
+    const argos::Real MinLinearSpeed = MaxLinearSpeed/2;
+    const argos::Real Robot_Gap_Distance = 0.2f;
+    const argos::UInt16 MaximumWaypoint = 5;
+    const argos::Real OverlappingCourseAngle = 35.0f;
+    argos::CRange<argos::Real>   ForageRangeX_1;
+    argos::CRange<argos::Real>   ForageRangeY_1;
 };
 
 #endif /* DSA_LOOP_FUNCTIONS_H */

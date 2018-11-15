@@ -50,12 +50,19 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     argos::Real CalculateAngleBetweenRobotCourse(BaseController::RobotData& ptr1,
                                                  BaseController::RobotData &ptr2);
     
-    void AddNewWayPoint(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
-                        argos::UInt8 ptrIndex);
+//    void AddNewWayPoint(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+//                        argos::UInt8 ptrIndex);
+    void AddNewWayPoint(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2);
     
     void CalculateWaitTime(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2);
     
+    argos::Real DistancePointSegment(argos::CVector2 SegPoint1, CVector2 SegPoint2, CVector2 Point);
     
+    argos::UInt16 GetTimeToTurn(argos:: Real newAngleToTurnInDegrees, argos::Real speed);
+    
+    argos::UInt16 CalculateTotalTime(BaseController::RobotData& ptr, argos::CVector2 TargetPoint, argos::CVector2 StartPoint);
+    
+    void AdjustTimeToReachNest(BaseController::RobotData& ptr1, BaseController::RobotData& ptr2);
     
     public:
         bool FirstCheck;
@@ -134,6 +141,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     bool RobotReachedWayPoint;
     bool NewWayPointAdded;
     
+    const argos::Real CollinearGap = 0.3;
     const argos::Real Safedistance = 0.5;
     const argos::Real MaxLinearSpeed = 16.0f;
     const argos::Real MinLinearSpeed = MaxLinearSpeed/2;

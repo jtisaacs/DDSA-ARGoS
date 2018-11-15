@@ -43,9 +43,12 @@ BaseController::BaseController() :
     stRobotData.Priority = 0;
     stRobotData.CollinearFlag = 0;
     stRobotData.Waypoint_Added = 0;
-    stRobotData.WaypointReached = 0;
+//    stRobotData.WaypointReached = 0;
     stRobotData.Intial_TurningWaitTime = 0;
     st_IntersectionData.Intersection_flag = 0;
+    st_IntersectionData.IntersectionDistance = 0;
+    stRobotData.Checked = 0;
+    stRobotData.Intersection_Adjustment = 0;
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
     stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
@@ -132,7 +135,8 @@ argos::CVector2 BaseController::GetPosition() {
 }
 
 argos::CVector2 BaseController::GetTarget() {
-    return TargetPosition;
+//    return TargetPosition;
+    return stRobotData.TargetPosition;
 }
 
 void BaseController::SetTarget(argos::CVector2 t) {
@@ -179,39 +183,18 @@ void BaseController::SetTarget(argos::CVector2 t) {
 
   // argos::LOG << "New Target x: "<< x << std::endl;
   //  argos::LOG << "New Target y:" << y << std::endl;
-
   TargetPosition = argos::CVector2(x, y);
-  stRobotData.TargetPosition = TargetPosition;
-
-   // clear the stack before adding new target position
-//  while(!stRobotData.WaypointStack.empty())
-//  {
-//      stRobotData.WaypointStack.pop();
-//  }
-//  if(stRobotData.pathcheck == true)
-//  {
-//    while(!MovementStack.empty())
-//    {
-//        MovementStack.pop();
-//    }
-//      Stop();
-//  }
-    
-  // set the waypoint added flag to check for collisions
-//  stRobotData.Waypoint_Added = true;
-
-  // don't move the robot until the path is checked
-//  stRobotData.pathcheck = false;
-    
-//  stRobotData.WaypointStack.push(TargetPosition);
+  if(stRobotData.WaypointStack.empty())
+  {
+      stRobotData.TargetPosition = TargetPosition;
+      stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
+  }
   stRobotData.StartWaypoint = GetPosition();
   stRobotData.TargetWaypoint = TargetPosition;
-//  stRobotData.WaypointCounter = 0;
+    //  stRobotData.WaypointCounter = 0;
 
   argos::Real distanceToTarget = (stRobotData.TargetWaypoint - GetPosition()).Length();
-//  stRobotData.Intial_TurningWaitTime = GetInitial_TurningWaitTime(stRobotData);
-//  stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
-
+    
 }
 
 void BaseController::SetStartPosition(argos::CVector3 sp) {
@@ -290,9 +273,9 @@ void BaseController::SetNextMovement()
 //        argos::CRadians headingToTarget = (TargetPosition - GetPosition()).Angle();
         argos::Real distanceToTarget = (stRobotData.TargetWaypoint - GetPosition()).Length();
         argos::CRadians headingToTarget = (stRobotData.TargetWaypoint - GetPosition()).Angle();
-//        stRobotData.InitialOrientation = headingToTarget;
+        stRobotData.NormailzedVector = (TargetPosition - GetPosition()).Normalize();
         argos::CRadians headingToTargetError = (GetHeading() - headingToTarget).SignedNormalize();
-
+       
         if(!IsAtTarget())
         {
             if(headingToTargetError > AngleTol)
@@ -328,13 +311,15 @@ void BaseController::SetNextMovement()
                 {
                     PushMovement(STOP, 0.0);
                 }
-            
+        
                 stRobotData.Waypoint_Added = true;
                 stRobotData.pathcheck = false;
                 stRobotData.Intial_TurningWaitTime = 0;
                 stRobotData.StopTurningTime = 0;
                 stRobotData.WaypointCounter = 0;
+                stRobotData.Intersection_Adjustment = 0;
                 stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
+                stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
            
         }
     }

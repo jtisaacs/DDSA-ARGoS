@@ -75,7 +75,7 @@ class DSA_controller : public BaseController {
         size_t              stopTimeStep;
         size_t              collisionDelay;
 	char direction_last;
-    bool FirstTimeSearch;
+    argos::UInt8 FirstTimeSearch;
         /* movement functions */
         CDegrees angleInDegrees;
 

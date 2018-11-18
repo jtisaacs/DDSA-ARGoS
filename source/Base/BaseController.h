@@ -68,6 +68,7 @@ class BaseController : public argos::CCI_Controller {
             argos::Real fBaseAngularWheelSpeed;
             argos::Real fLinearWheelSpeed;
             bool GoingToNest;
+            bool MovementStarted;
             argos::CVector2 NormailzedVector;
             argos::UInt16 Intial_TurningWaitTime;
             argos::UInt16 StopTurningTime;

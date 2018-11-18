@@ -19,7 +19,4 @@
 [INFO] Loaded library "./build/source/DSA/libDSA_loop_functions.so"
 Finished Initializing the DDSA
 Finished Initializing the DDSA
-Finished Initializing the DDSA
-Finished Initializing the DDSA
-Finished Initializing the DDSA
 [INFO] The physics engine "dyn2d" will perform 10 iterations per tick (dt = 0.003125 sec)

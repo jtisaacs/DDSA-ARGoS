@@ -47,7 +47,7 @@
 
 	<!-- Modify TargetDistanceTolerance to Simulate Error -->
         <settings ProbTargetDetection    = "0.01"
-	          NumberOfRobots          = "5"
+	          NumberOfRobots          = "2"
                   NumberOfSpirals         = "30"
                   NestDistanceTolerance = "0.01"  
                   NestAngleTolerance = "0.05"  
@@ -95,7 +95,7 @@
                 distances="0.2, 0.2, 0.0"
                 layout="2, 15, 1" />
       <orientation method="constant" values="0.0, 0.0, 0.0" />
-      <entity quantity="5" max_trials="100">
+      <entity quantity="2" max_trials="100">
         <foot-bot id="DSA_">
           <controller config="DSA"/>
         </foot-bot>

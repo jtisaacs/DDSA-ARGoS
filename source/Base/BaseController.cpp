@@ -298,12 +298,15 @@ void BaseController::SetNextMovement()
         else{
                 if(!stRobotData.WaypointStack.empty())
                 {
+                    
                     SetStopMovement();
 //                    stRobotData.StartWaypoint = stRobotData.TargetWaypoint;
                     SetTarget(stRobotData.WaypointStack.top());
 //                    stRobotData.TargetWaypoint = stRobotData.WaypointStack.top();
                     stRobotData.WaypointStack.pop();
-                    SetMovement();
+                    stRobotData.Waypoint_Added = true;
+                    stRobotData.StopTurningTime = 50;
+//                    SetMovement();
 //                    Stop();
 
                 }
@@ -312,10 +315,10 @@ void BaseController::SetNextMovement()
                     PushMovement(STOP, 0.0);
                 }
         
-                stRobotData.Waypoint_Added = true;
+            
                 stRobotData.pathcheck = false;
                 stRobotData.Intial_TurningWaitTime = 0;
-                stRobotData.StopTurningTime = 0;
+//                stRobotData.StopTurningTime = 0;
                 stRobotData.WaypointCounter = 0;
                 stRobotData.Intersection_Adjustment = 0;
                 stRobotData.fLinearWheelSpeed = RobotForwardSpeed;

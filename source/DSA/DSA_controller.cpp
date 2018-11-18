@@ -266,7 +266,7 @@ void DSA_controller::CopyPatterntoTemp()
  *****/
 void DSA_controller::ControlStep() 
 {
-    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
+//    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
     argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
 //    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
 //    argos::LOG<<"Ticks calculated: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
@@ -276,31 +276,31 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Holding food flag: "<< IsHoldingFood()<<std::endl;
 
 //    argos::LOG<<"Return Position: "<<ReturnPosition<<std::endl;
-//    argos::LOG<<"DSA State: "<<DSA<<std::endl;
+    argos::LOG<<"DSA State: "<<DSA<<std::endl;
 ////    argos::LOG<<"movemnt state: "<<CurrentMovementState<<std::endl;
     argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
-    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
-//    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
-//    argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
+//    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
+    argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
     argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
 //    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
     argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
 //    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
 //    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
-//    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
+    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
 //////    argos::LOG<<"Target reached: "<<stRobotData.WaypointReached<<std::endl;
 //    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
-    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
-//    argos::LOG<<"Collinear Flag: "<<stRobotData.CollinearFlag<<std::endl;
+//    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
+    argos::LOG<<"Collinear Flag: "<<stRobotData.CollinearFlag<<std::endl;
 //    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
 //
     argos::LOG<<"Robot Course Angle: "<<stRobotData.InitialOrientation<<std::endl;
     argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
-//    argos::LOG<<"Shortest Distance: "<<stRobotData.Priority<<std::endl;
-////    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
+    argos::LOG<<"Shortest Distance: "<<stRobotData.Priority<<std::endl;
+//    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
 ////    argos::LOG<<"Waypoint Flag: "<<loopFunctions->NewWayPointAdded<<std::endl;
 //    argos::LOG<<"Waypoint_Counter: "<<stRobotData.WaypointCounter<<std::endl;
-    argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
+//    argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
     argos::LOG<<"Stop Turning Time: "<<stRobotData.StopTurningTime<<std::endl;
     argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
     
@@ -337,6 +337,7 @@ void DSA_controller::ControlStep()
               ReturnPosition = GetPosition();
               ReturnPatternPosition = GetTarget();
               DSA = RETURN_TO_NEST;
+              SetStopMovement();
           }
           else
           {
@@ -350,10 +351,10 @@ void DSA_controller::ControlStep()
       else
       {
   
-          if (loopFunctions->FirstCheck == 1 and IsAtTarget())
-          {
-              stRobotData.Waypoint_Added = false;
-          }
+//          if (loopFunctions->FirstCheck == 1 and IsAtTarget())
+//          {
+//              stRobotData.Waypoint_Added = false;
+//          }
 
           GetTargets(); /* Initializes targets positions. */
       
@@ -392,6 +393,7 @@ void DSA_controller::ControlStep()
               stRobotData.GoingToNest = false;
               if(stRobotData.WaypointStack.empty())
               {
+                  SetStopMovement();
                   stRobotData.Waypoint_Added = true;
                   SetTarget(ReturnPosition);
                   stRobotData.pathcheck = false;
@@ -417,6 +419,7 @@ void DSA_controller::ControlStep()
 //            }
                 if(stRobotData.GoingToNest == false)
                 {
+                    SetStopMovement();
                     stRobotData.Waypoint_Added = true;
                     stRobotData.pathcheck = false;
                 }
@@ -446,13 +449,11 @@ void DSA_controller::ControlStep()
             
       }
 
-  if(stRobotData.pathcheck == 1)
+  if(stRobotData.pathcheck == true)
   {
 
-      stRobotData.pathcheck = 0;
+      stRobotData.pathcheck = false;
       stRobotData.Waypoint_Added = false;
-//      stRobotData.CollinearFlag = 0;
-//      st_IntersectionData.Intersection_flag = 0;
   }
     
 //  else if((loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true))

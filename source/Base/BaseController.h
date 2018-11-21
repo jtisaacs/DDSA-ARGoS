@@ -38,7 +38,7 @@ class BaseController : public argos::CCI_Controller {
     
         void SetMovement();
         void SetStopMovement();
-
+        void SetHardStopMovement();
         /*  time calculation functions */
         size_t SimulationTick();
         size_t SimulationTicksPerSecond();

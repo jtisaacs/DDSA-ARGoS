@@ -38,16 +38,17 @@ BaseController::BaseController() :
 //    stRobotData.Checked = 0;
     stRobotData.StopTurningTime = 0;
     collision_counter = 0;
-    stRobotData.pathcheck = 0;
+    stRobotData.pathcheck = false;
     stRobotData.InitialOrientation = 0;
     stRobotData.Priority = 0;
-    stRobotData.CollinearFlag = 0;
-    stRobotData.Waypoint_Added = 0;
+    stRobotData.CollinearFlag = false;
+    stRobotData.Waypoint_Added = false;
 //    stRobotData.WaypointReached = 0;
     stRobotData.Intial_TurningWaitTime = 0;
     st_IntersectionData.Intersection_flag = 0;
     st_IntersectionData.IntersectionDistance = 0;
-    stRobotData.Checked = 0;
+    stRobotData.Checked = false;
+    stRobotData.GoingToNest = false;
     stRobotData.Intersection_Adjustment = 0;
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
@@ -296,34 +297,25 @@ void BaseController::SetNextMovement()
         }
             /* if stack is empty, robot has reached the target */
         else{
+                PushMovement(STOP, 0.0);
+//                SetHardStopMovement();
                 if(!stRobotData.WaypointStack.empty())
                 {
-                    
-                    SetStopMovement();
-//                    stRobotData.StartWaypoint = stRobotData.TargetWaypoint;
                     SetTarget(stRobotData.WaypointStack.top());
-//                    stRobotData.TargetWaypoint = stRobotData.WaypointStack.top();
                     stRobotData.WaypointStack.pop();
-                    stRobotData.Waypoint_Added = true;
-                    stRobotData.StopTurningTime = 50;
+//                    stRobotData.StopTurningTime += 50;
 //                    SetMovement();
-//                    Stop();
-
                 }
-                else
-                {
-                    PushMovement(STOP, 0.0);
-                }
-        
+//                else
+//                {
+//                    PushMovement(STOP, 0.0);
+//                }
             
+                stRobotData.Waypoint_Added = true;
                 stRobotData.pathcheck = false;
                 stRobotData.Intial_TurningWaitTime = 0;
-//                stRobotData.StopTurningTime = 0;
-                stRobotData.WaypointCounter = 0;
-                stRobotData.Intersection_Adjustment = 0;
                 stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
                 stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
-           
         }
     }
     else
@@ -617,6 +609,18 @@ argos::Real BaseController::SimulationSecondsPerTick() {
 argos::Real BaseController::SimulationTimeInSeconds() {
     return (argos::Real)(SimulationTick()) * SimulationSecondsPerTick();
 }
+
+void BaseController::SetHardStopMovement()
+{
+    while(!MovementStack.empty())
+    {
+        MovementStack.pop();
+    }
+    Stop();
+    PushMovement(STOP, 0.0);
+}
+
+
 
 /***************************************************************************************************/
 /* Function to stop movement */

@@ -334,10 +334,10 @@ void DSA_controller::ControlStep()
          
           if (cpf)
           {
+              SetHardStopMovement();
               ReturnPosition = GetPosition();
               ReturnPatternPosition = GetTarget();
               DSA = RETURN_TO_NEST;
-              SetStopMovement();
           }
           else
           {
@@ -386,21 +386,32 @@ void DSA_controller::ControlStep()
             
             isHoldingFood = false;
             
-          if(IsAtTarget())
-          {
-              DSA = RETURN_TO_SEARCH;
-              SetIsHeadingToNest(false);
-              stRobotData.GoingToNest = false;
-              if(stRobotData.WaypointStack.empty())
-              {
-                  SetStopMovement();
-                  stRobotData.Waypoint_Added = true;
-                  SetTarget(ReturnPosition);
-                  stRobotData.pathcheck = false;
-              }
-
-    
-          }
+            DSA = RETURN_TO_SEARCH;
+            SetIsHeadingToNest(false);
+            stRobotData.GoingToNest = false;
+            if(stRobotData.WaypointStack.empty())
+            {
+              stRobotData.Waypoint_Added = true;
+              SetTarget(ReturnPosition);
+              stRobotData.pathcheck = false;
+              SetHardStopMovement();
+            }
+            
+//          if(IsAtTarget())
+//          {
+//              DSA = RETURN_TO_SEARCH;
+//              SetIsHeadingToNest(false);
+//              stRobotData.GoingToNest = false;
+//              if(stRobotData.WaypointStack.empty())
+//              {
+//                  stRobotData.Waypoint_Added = true;
+//                  SetTarget(ReturnPosition);
+//                  stRobotData.pathcheck = false;
+//                  SetHardStopMovement();
+//              }
+//
+//
+//          }
 
           /*
           ofstream results_output_stream;
@@ -419,9 +430,9 @@ void DSA_controller::ControlStep()
 //            }
                 if(stRobotData.GoingToNest == false)
                 {
-                    SetStopMovement();
                     stRobotData.Waypoint_Added = true;
                     stRobotData.pathcheck = false;
+                    SetHardStopMovement();
                 }
                 SetIsHeadingToNest(true);
                 stRobotData.GoingToNest = true;
@@ -451,9 +462,20 @@ void DSA_controller::ControlStep()
 
   if(stRobotData.pathcheck == true)
   {
-
+      
       stRobotData.pathcheck = false;
       stRobotData.Waypoint_Added = false;
+      SetMovement();
+  }
+    
+  else if(loopFunctions->FirstCheck == 1 and  loopFunctions->NewWayPointAdded == 1)
+  {
+      SetHardStopMovement();
+  }
+    
+  else if(loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true && stRobotData.pathcheck == false)
+  {
+      SetHardStopMovement();
   }
     
 //  else if((loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true))

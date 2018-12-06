@@ -49,6 +49,7 @@ BaseController::BaseController() :
     st_IntersectionData.IntersectionDistance = 0;
     stRobotData.Checked = false;
     stRobotData.GoingToNest = false;
+    stRobotData.GoingToOrFromNest = false;
     stRobotData.Intersection_Adjustment = 0;
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;

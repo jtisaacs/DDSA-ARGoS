@@ -40,8 +40,8 @@ class DSA_controller : public BaseController {
 
         size_t NumberOfRobots;
         size_t NumberOfSpirals;
-        size_t Path_Checking_Activated;
-        bool ResumeMovemnet;
+        argos::UInt16 StepsToActivateAlgorithm;
+
 
         /* Robot DSA state variable */
         enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3 } DSA;

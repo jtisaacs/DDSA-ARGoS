@@ -11,7 +11,8 @@ DSA_controller::DSA_controller() :
     RNG(NULL),
     ResetReturnPosition(true),
     stopTimeStep(0),
-    isHoldingFood(false)
+    isHoldingFood(false),
+    StepsToActivateAlgorithm(0)
 {}
 
 /*****
@@ -108,7 +109,7 @@ void DSA_controller::Init(TConfigurationNode& node) {
     }
     
     FirstTimeSearch = 0;
-    ResumeMovemnet = 0;
+//    ResumeMovemnet = 0;
     cout << "Finished Initializing the DDSA" << endl;
 }
 
@@ -152,6 +153,10 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('N');
                 ith_robot_path += 'N';
+                if((i_robot-1) == RobotNumber && i_circuit < 1)
+                {
+                    StepsToActivateAlgorithm++;
+                }
             }
             
             int n_steps_east = calcDistanceToTravel(i_robot, i_circuit, N_robots, 'E');
@@ -159,6 +164,10 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('E');
                 ith_robot_path += 'E';
+                if(i_robot == RobotNumber && i_circuit < 1)
+                {
+                    StepsToActivateAlgorithm++;
+                }
             }
 
             int n_steps_south = calcDistanceToTravel(i_robot, i_circuit, N_robots, 'S');
@@ -166,6 +175,10 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('S');
                 ith_robot_path += 'S';
+                if((i_robot - 1) == RobotNumber && i_circuit < 1)
+                {
+                    StepsToActivateAlgorithm++;
+                }
             }
 
             int n_steps_west = calcDistanceToTravel(i_robot, i_circuit, N_robots, 'W');
@@ -173,12 +186,17 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('W');
                 ith_robot_path += 'W';
+                if((i_robot-1) == RobotNumber && i_circuit < 1)
+                {
+                    StepsToActivateAlgorithm++;
+                }
             }
 
         }
 
         paths.push_back(ith_robot_path);
         ith_robot_path.clear();
+        StepsToActivateAlgorithm = 0;
     }
 
     //pattern = ith_robot_path;
@@ -249,6 +267,8 @@ void DSA_controller::GetPattern(string ith_Pattern)
 {
     copy(ith_Pattern.begin(),ith_Pattern.end(),back_inserter(tempPattern));
     reverse(tempPattern.begin(), tempPattern.end());
+    copy(tempPattern.begin(), tempPattern.end(),back_inserter(stRobotData.pattern));
+    reverse(stRobotData.pattern.begin(), stRobotData.pattern.end());
 }
 
 // /*****
@@ -258,6 +278,7 @@ void DSA_controller::CopyPatterntoTemp()
 {
     copy(pattern.begin(),pattern.end(),back_inserter(tempPattern));
     reverse(tempPattern.begin(),tempPattern.end());/* Reverses the tempPattern */
+    
 }
 
 /*****
@@ -268,6 +289,8 @@ void DSA_controller::ControlStep()
 {
 //    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
     argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
+//    argos::LOG<<"Robot ID: "<<RobotNumber<<std::endl;
+    
 //    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
 //    argos::LOG<<"Ticks calculated: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
 //    argos::LOG<<"Safe distanace Ticks: "<<stRobotData.WaypointCounter<<std::endl;
@@ -278,23 +301,28 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Return Position: "<<ReturnPosition<<std::endl;
     argos::LOG<<"DSA State: "<<DSA<<std::endl;
 ////    argos::LOG<<"movemnt state: "<<CurrentMovementState<<std::endl;
-    argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
-//    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+//    argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
+//    argos::LOG<<"Steps To Activate Algorithm: "<<StepsToActivateAlgorithm<<std::endl;
+    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+//     argos::LOG<<"Algorithm Checked: "<<stRobotData.Checked<<std::endl;
+    
     argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
     argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
     argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
-//    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
+    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
     argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+    
+    argos::LOG<<"Waypoint: "<<stRobotData.AddedPoint<<std::endl;
 //    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
 //    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
-    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
+//    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
 //////    argos::LOG<<"Target reached: "<<stRobotData.WaypointReached<<std::endl;
 //    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
 //    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
     argos::LOG<<"Collinear Flag: "<<stRobotData.CollinearFlag<<std::endl;
 //    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
 //
-    argos::LOG<<"Robot Course Angle: "<<stRobotData.InitialOrientation<<std::endl;
+//    argos::LOG<<"Robot Course Angle: "<<stRobotData.InitialOrientation<<std::endl;
     argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
     argos::LOG<<"Shortest Distance: "<<stRobotData.Priority<<std::endl;
 //    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
@@ -338,6 +366,7 @@ void DSA_controller::ControlStep()
               ReturnPosition = GetPosition();
               ReturnPatternPosition = GetTarget();
               DSA = RETURN_TO_NEST;
+              stRobotData.GoingToOrFromNest = true;
           }
           else
           {
@@ -355,13 +384,17 @@ void DSA_controller::ControlStep()
 //          {
 //              stRobotData.Waypoint_Added = false;
 //          }
-
+          if(FirstTimeSearch == StepsToActivateAlgorithm)
+          {
+              // set the flag to activate path planning algorithm
+              stRobotData.Checked = true;
+          }
           GetTargets(); /* Initializes targets positions. */
       
-          if(FirstTimeSearch < 3)
-          {
-              FirstTimeSearch++;
-          }
+//          if(FirstTimeSearch < 3)
+//          {
+//              FirstTimeSearch++;
+//          }
 
    
       }
@@ -386,11 +419,12 @@ void DSA_controller::ControlStep()
             
             isHoldingFood = false;
             
-            DSA = RETURN_TO_SEARCH;
+            
             SetIsHeadingToNest(false);
             stRobotData.GoingToNest = false;
             if(stRobotData.WaypointStack.empty())
             {
+              DSA = RETURN_TO_SEARCH;
               stRobotData.Waypoint_Added = true;
               SetTarget(ReturnPosition);
               stRobotData.pathcheck = false;
@@ -453,6 +487,7 @@ void DSA_controller::ControlStep()
               stRobotData.Waypoint_Added = false;
               SetIsHeadingToNest(false);
               stRobotData.GoingToNest = false;
+              stRobotData.GoingToOrFromNest = false;
               SetTarget(ReturnPatternPosition);
               DSA = SEARCHING;
     
@@ -558,14 +593,19 @@ void DSA_controller::SetTargetW(char x){
    /* If the robot hit target and the patter size >0
        then find the next direction. */
      
-     if(FirstTimeSearch == 2)
-     {
-         // set the flag to activate path planning algorithm
-         stRobotData.Checked = true;
-     }
+//     if(FirstTimeSearch == 2)
+//     {
+//         // set the flag to activate path planning algorithm
+//         stRobotData.Checked = true;
+//     }
+    
     if(TargetHit() == true && tempPattern.size() > 0) {
         
-//      stRobotData.Waypoint_Added = true;
+    if(FirstTimeSearch < StepsToActivateAlgorithm)
+    {
+              FirstTimeSearch++;
+    }
+
       /* Finds the last direction of the pattern. */
       direction_last = tempPattern[tempPattern.size() - 1];
 
@@ -586,6 +626,8 @@ void DSA_controller::SetTargetW(char x){
 	}
 
 	tempPattern.pop_back();
+    stRobotData.pattern.pop_back();
+        
     }
     
     else if(tempPattern.size() == 0) 

@@ -77,7 +77,7 @@
 <!--      />-->
   <DDSA PrintFinalScore = "1" FoodItemCount = "256" FoodBoundsWidth="10" FoodBoundsHeight="10"
   FoodDistribution = "2"
-  NestRadius = "1"
+  NestRadius = "0.25"
   />
 
   </loop_functions>

@@ -68,6 +68,7 @@ class BaseController : public argos::CCI_Controller {
             argos::Real fBaseAngularWheelSpeed;
             argos::Real fLinearWheelSpeed;
             bool GoingToNest;
+            bool GoingToOrFromNest;
             bool MovementStarted;
             argos::CVector2 NormailzedVector;
             argos::UInt16 Intial_TurningWaitTime;
@@ -80,6 +81,7 @@ class BaseController : public argos::CCI_Controller {
             argos::Real InitialOrientation;
             argos::CDegrees HeadingAngle;
             std::stack<argos::CVector2>WaypointStack;
+            std::vector<char> pattern;
         };
     
         struct IntersectionData{

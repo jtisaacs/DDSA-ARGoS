@@ -35,11 +35,16 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     argos::Real CalculateDistance(argos::CVector2 cPosition1, argos::CVector2 cPosition2);
     argos::UInt16 GetTicksToWait(argos::Real dist, argos::Real speed);
     
-    void Find_Intersection(BaseController::RobotData& ptr1, BaseController::RobotData& ptr2,
-                           BaseController::IntersectionData& ptr3);
+    void Find_Intersection(CVector2 pt1, CVector2 pt2, CVector2 pt3, CVector2 pt4,
+                                               BaseController::IntersectionData &ptr3);
     
-    void IntersectionCollisionCheck(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
-                                    BaseController::IntersectionData &ptr3);
+    void IntersectionCollisionCheck(argos::CVector2 pt1, argos::CVector2 pt2,               BaseController::RobotData& ptr1, BaseController::RobotData &ptr2, BaseController::IntersectionData &ptr3);
+    
+//    void Find_Intersection(BaseController::RobotData& ptr1, BaseController::RobotData& ptr2,
+//                           BaseController::IntersectionData& ptr3);
+//
+//    void IntersectionCollisionCheck(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+//                                    BaseController::IntersectionData &ptr3);
     
     void CheckCollinearity(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
                            BaseController::IntersectionData &ptr3);
@@ -64,12 +69,18 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     
     void AdjustTimeToReachNest(BaseController::RobotData& ptr1, BaseController::RobotData& ptr2);
     
+    argos::CVector2 CalculateTargePoint(BaseController::RobotData& ptr);
+    
+    void GetPointAtSafeDistance(BaseController::RobotData& ptr);
+    
     public:
         bool FirstCheck;
         argos::CRandom::CRNG* m_pcRNG;
         argos::UInt16 SimulatorTicksperSec;
         argos::UInt16 stoptime1;
         argos::UInt16 stoptime2;
+        argos::CVector2 PointAtSafeDistance;
+        argos::CVector2 PointChangeDirection;
     
 	protected:
 
@@ -98,7 +109,8 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         size_t PowerRank;
 
 		CVector2 NestPosition;
-
+        CVector2 TargetPoint1;
+        CVector2 TargetPoint2;
         /* physical robot & world variables */
         argos::Real FoodRadius;
         argos::Real FoodRadiusSquared;
@@ -137,17 +149,19 @@ class DSA_loop_functions : public argos::CLoopFunctions {
 	double score;
 	int PrintFinalScore;
     argos::UInt16 Result_Checked;
+    std::vector <BaseController::RobotData> stRobotDataStruct;
     bool update_movement_state;
     bool RobotReachedWayPoint;
     bool NewWayPointAdded;
-    
+    char direction_last;
     const argos::Real CollinearGap = 0.3;
     const argos::Real Safedistance = 0.5;
+    const argos::Real SearcherGap = 0.18;
     const argos::Real MaxLinearSpeed = 16.0f;
     const argos::Real MinLinearSpeed = MaxLinearSpeed/2;
     const argos::Real Robot_Gap_Distance = 0.2f;
     const argos::UInt16 MaximumWaypoint = 5;
-    const argos::Real OverlappingCourseAngle = 35.0f;
+    const argos::Real OverlappingCourseAngle = 30.0f;
     argos::CRange<argos::Real>   ForageRangeX_1;
     argos::CRange<argos::Real>   ForageRangeY_1;
 };

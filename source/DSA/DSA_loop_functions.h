@@ -38,7 +38,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     void Find_Intersection(CVector2 pt1, CVector2 pt2, CVector2 pt3, CVector2 pt4,
                                                BaseController::IntersectionData &ptr3);
     
-    void IntersectionCollisionCheck(argos::CVector2 pt1, argos::CVector2 pt2,               BaseController::RobotData& ptr1, BaseController::RobotData &ptr2, BaseController::IntersectionData &ptr3);
+    void IntersectionCollisionCheck(argos::CVector2 pt1, argos::CVector2 pt2,               BaseController::RobotData& ptr1, BaseController::RobotData &ptr2, BaseController::IntersectionData &ptr3,argos::UInt8 index);
     
 //    void Find_Intersection(BaseController::RobotData& ptr1, BaseController::RobotData& ptr2,
 //                           BaseController::IntersectionData& ptr3);
@@ -156,9 +156,9 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     char direction_last;
     const argos::Real CollinearGap = 0.3;
     const argos::Real Safedistance = 0.5;
-    const argos::Real SearcherGap = 0.18;
+    const argos::Real Searcher_Gap = 0.18;
     const argos::Real MaxLinearSpeed = 16.0f;
-    const argos::Real MinLinearSpeed = MaxLinearSpeed/2;
+    const argos::Real MinLinearSpeed = 12;
     const argos::Real Robot_Gap_Distance = 0.2f;
     const argos::UInt16 MaximumWaypoint = 5;
     const argos::Real OverlappingCourseAngle = 30.0f;

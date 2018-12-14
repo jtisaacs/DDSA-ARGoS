@@ -37,6 +37,7 @@ class BaseController : public argos::CCI_Controller {
         void PushMovement(size_t moveType, argos::Real moveSize);
     
         void SetMovement();
+        bool CheckStopTime();
         void SetStopMovement();
         void SetHardStopMovement();
         /*  time calculation functions */
@@ -46,7 +47,7 @@ class BaseController : public argos::CCI_Controller {
         argos::Real SimulationTimeInSeconds();
     
     public:
-        bool path_planning_activated;
+//        bool StopMovement;;
         // controller state variables
         enum MovementState {
             STOP    = 0,
@@ -63,13 +64,14 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector2 StartWaypoint;
             argos::CVector2 AddedPoint;
             argos::UInt16 id_robot;
-            argos::Real Priority;
+            argos::UInt16 Priority;
             argos::UInt16 WaypointCounter;
             argos::Real fBaseAngularWheelSpeed;
             argos::Real fLinearWheelSpeed;
             bool GoingToNest;
             bool GoingToOrFromNest;
             bool MovementStarted;
+            bool StopMovement;
             argos::CVector2 NormailzedVector;
             argos::UInt16 Intial_TurningWaitTime;
             argos::UInt16 StopTurningTime;
@@ -78,6 +80,7 @@ class BaseController : public argos::CCI_Controller {
             bool Intersection_Adjustment;
             bool CollinearFlag;
             bool pathcheck;
+            bool WaypointStackpopped;
             argos::Real InitialOrientation;
             argos::CDegrees HeadingAngle;
             std::stack<argos::CVector2>WaypointStack;
@@ -109,9 +112,9 @@ class BaseController : public argos::CCI_Controller {
 
         bool IsAtTarget();
     
-        inline void ActivatePathPlanning(){
-            path_planning_activated = true;
-        }
+//        inline void ActivatePathPlanning(){
+//            path_planning_activated = true;
+//        }
     void SetMovementState(size_t state);
     
 public:

@@ -292,7 +292,8 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Robot ID: "<<RobotNumber<<std::endl;
     
 //    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
-//    argos::LOG<<"Ticks calculated: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
+    argos::LOG<<"Ticks calculated for intersection: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
+    argos::LOG<<"Robot ID inter: "<<stRobotData.Priority<<std::endl;
 //    argos::LOG<<"Safe distanace Ticks: "<<stRobotData.WaypointCounter<<std::endl;
 //    argos::LOG<<"Simulator TicksPerSec: "<<loopFunctions->SimulatorTicksperSec<<std::endl;
     
@@ -304,29 +305,34 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
 //    argos::LOG<<"Steps To Activate Algorithm: "<<StepsToActivateAlgorithm<<std::endl;
     argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
 //     argos::LOG<<"Algorithm Checked: "<<stRobotData.Checked<<std::endl;
     
-    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
-    argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
-    argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
-    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
-    argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
+//    argos::LOG<<"Point Change Direction: "<<loopFunctions->PointChangeDirection<<std::endl;
+//    argos::LOG<<"Point Safe Distance: "<<loopFunctions->PointAtSafeDistance<<std::endl;
     
-    argos::LOG<<"Waypoint: "<<stRobotData.AddedPoint<<std::endl;
-//    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
-//    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
+    
+//    argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
+    argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
+//    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
+    argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+//
+//    argos::LOG<<"Waypoint: "<<stRobotData.AddedPoint<<std::endl;
+    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
+    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
 //    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
 //////    argos::LOG<<"Target reached: "<<stRobotData.WaypointReached<<std::endl;
-//    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
-//    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
-    argos::LOG<<"Collinear Flag: "<<stRobotData.CollinearFlag<<std::endl;
+    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
+    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
+//    argos::LOG<<"Collinear Flag: "<<stRobotData.CollinearFlag<<std::endl;
 //    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
 //
 //    argos::LOG<<"Robot Course Angle: "<<stRobotData.InitialOrientation<<std::endl;
-    argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
-    argos::LOG<<"Shortest Distance: "<<stRobotData.Priority<<std::endl;
-//    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
-////    argos::LOG<<"Waypoint Flag: "<<loopFunctions->NewWayPointAdded<<std::endl;
+//    argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
+//    argos::LOG<<"Shortest Distance: "<<stRobotData.Priority<<std::endl;
+    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
+    argos::LOG<<"Waypoint Flag Loop Functions: "<<loopFunctions->NewWayPointAdded<<std::endl;
 //    argos::LOG<<"Waypoint_Counter: "<<stRobotData.WaypointCounter<<std::endl;
 //    argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
     argos::LOG<<"Stop Turning Time: "<<stRobotData.StopTurningTime<<std::endl;
@@ -362,7 +368,7 @@ void DSA_controller::ControlStep()
          
           if (cpf)
           {
-              SetHardStopMovement();
+//              SetHardStopMovement();
               ReturnPosition = GetPosition();
               ReturnPatternPosition = GetTarget();
               DSA = RETURN_TO_NEST;
@@ -389,7 +395,10 @@ void DSA_controller::ControlStep()
               // set the flag to activate path planning algorithm
               stRobotData.Checked = true;
           }
-          GetTargets(); /* Initializes targets positions. */
+          if(stRobotData.WaypointStack.empty())
+          {
+              GetTargets(); /* Initializes targets positions. */
+          }
       
 //          if(FirstTimeSearch < 3)
 //          {
@@ -428,7 +437,10 @@ void DSA_controller::ControlStep()
               stRobotData.Waypoint_Added = true;
               SetTarget(ReturnPosition);
               stRobotData.pathcheck = false;
-              SetHardStopMovement();
+              if(stRobotData.GoingToOrFromNest == true)
+              {
+                  SetHardStopMovement();
+              }
             }
             
 //          if(IsAtTarget())
@@ -466,7 +478,7 @@ void DSA_controller::ControlStep()
                 {
                     stRobotData.Waypoint_Added = true;
                     stRobotData.pathcheck = false;
-                    SetHardStopMovement();
+//                    SetHardStopMovement();
                 }
                 SetIsHeadingToNest(true);
                 stRobotData.GoingToNest = true;
@@ -482,7 +494,7 @@ void DSA_controller::ControlStep()
           stRobotData.GoingToNest = false;
       
           // Check if we have reached the return position
-          if (IsAtTarget())
+          if (IsAtTarget() and stRobotData.WaypointStack.empty())
           {
               stRobotData.Waypoint_Added = false;
               SetIsHeadingToNest(false);
@@ -500,47 +512,24 @@ void DSA_controller::ControlStep()
       
       stRobotData.pathcheck = false;
       stRobotData.Waypoint_Added = false;
-      SetMovement();
+//      SetMovement();
   }
     
-  else if(loopFunctions->FirstCheck == 1 and  loopFunctions->NewWayPointAdded == 1)
-  {
-      SetHardStopMovement();
-  }
-    
-  else if(loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true && stRobotData.pathcheck == false)
-  {
-      SetHardStopMovement();
-  }
-    
-//  else if((loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true))
+//  else if(loopFunctions->FirstCheck == 1 and  loopFunctions->NewWayPointAdded == 1)
 //  {
-//      if(ResumeMovemnet == 0)
-//      {
-//          stRobotData.StartWaypoint = GetPosition();
-//          SetStopMovement();
-//          ResumeMovemnet = 1;
-//      }
-//
-// }
-    
-//  else if((loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true)
-//          ||
-//          (loopFunctions->FirstCheck == 1 && loopFunctions->NewWayPointAdded == 1))
-//  {
-//        stRobotData.StartWaypoint = GetPosition();
-//        SetStopMovement();
-//        ResumeMovemnet = 0;
-//
-//   }
-//  else if(loopFunctions->FirstCheck == 1 and loopFunctions->NewWayPointAdded == 0)
-//  {
-//    if(ResumeMovemnet == 0)
-//    {
-//        SetMovement();
-//        ResumeMovemnet = 1;
-//    }
+//      SetHardStopMovement();
 //  }
+//
+//  else if(loopFunctions->FirstCheck == 1 && stRobotData.Waypoint_Added == true && stRobotData.pathcheck == false)
+//  {
+//      SetHardStopMovement();
+//  }
+    
+
+  if(stRobotData.StopMovement == true)
+  {
+      SetStopMovement();
+  }
     
   Move();
     
@@ -667,11 +656,12 @@ void DSA_controller::SetHoldingFood(){
 	  {
             if ((GetPosition()-loopFunctions->FoodList[i]).SquareLength() < FoodDistanceTolerance && !isHoldingFood)
 	      {
-		isHoldingFood = true;
+              isHoldingFood = true;
+              SetHardStopMovement();
 	      } 
 	    else 
 	      {
-		newFoodList.push_back(loopFunctions->FoodList[i]);
+              newFoodList.push_back(loopFunctions->FoodList[i]);
 	      }
         } 
         loopFunctions->FoodList = newFoodList;

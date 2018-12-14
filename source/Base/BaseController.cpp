@@ -23,7 +23,7 @@ BaseController::BaseController() :
     heading_to_nest(false),
     DestinationNoiseStdev(0),
     PositionNoiseStdev(0),
-    path_planning_activated(false),
+//    StopMovement(false),
     RNG(argos::CRandom::CreateRNG("argos"))
 {
     // calculate the forage range and compensate for the robot's radius of 0.085m
@@ -43,6 +43,7 @@ BaseController::BaseController() :
     stRobotData.Priority = 0;
     stRobotData.CollinearFlag = false;
     stRobotData.Waypoint_Added = false;
+    stRobotData.StopMovement = false;
 //    stRobotData.WaypointReached = 0;
     stRobotData.Intial_TurningWaitTime = 0;
     st_IntersectionData.Intersection_flag = 0;
@@ -50,6 +51,7 @@ BaseController::BaseController() :
     stRobotData.Checked = false;
     stRobotData.GoingToNest = false;
     stRobotData.GoingToOrFromNest = false;
+    stRobotData.WaypointStackpopped = false;
     stRobotData.Intersection_Adjustment = 0;
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
@@ -501,10 +503,25 @@ void BaseController::Stop() {
     CurrentMovementState = STOP;
 }
 
+bool BaseController::CheckStopTime()
+{
+    bool RobotStopped = false;
+    if((stRobotData.StopTurningTime > 0.0))
+    {
+        Stop();
+        wheelActuator->SetLinearVelocity(0.0, 0.0);
+        stRobotData.StopTurningTime--;
+        RobotStopped = true;
+    }
+    return RobotStopped;
+}
+
 void BaseController::Move() {
 
 
-    if(Wait() == true) return;
+//    if(Wait() == true) return;
+    
+    if(CheckStopTime() == true) return;
     
     CollisionDetection();
 
@@ -513,18 +530,32 @@ void BaseController::Move() {
 
         /* stop movement */
         case STOP: {
-            if((stRobotData.StopTurningTime > 0.0))
-            {
-                Stop();
-                wheelActuator->SetLinearVelocity(0.0, 0.0);
-                stRobotData.StopTurningTime--;
-            }
-            else{
+//            if((stRobotData.StopTurningTime > 0.0))
+//            {
+//                Stop();
+//                wheelActuator->SetLinearVelocity(0.0, 0.0);
+//                stRobotData.StopTurningTime--;
+//            }
+//            else{
                 wheelActuator->SetLinearVelocity(0.0, 0.0);
                 SetNextMovement();
-            }
+//            }
             break;
         }
+            
+//        case STOP_WITH_TIME: {
+//            if((stRobotData.StopTurningTime > 0.0))
+//            {
+////                Stop();
+//                wheelActuator->SetLinearVelocity(0.0, 0.0);
+//                stRobotData.StopTurningTime--;
+//            }
+//            else{
+//                Stop();
+//            }
+//
+//            break;
+//        }
 
         /* turn left until the robot is facing an angle inside of the TargetAngleTolerance */
         case LEFT: {
@@ -619,6 +650,7 @@ void BaseController::SetHardStopMovement()
     }
     Stop();
     PushMovement(STOP, 0.0);
+    stRobotData.StopMovement = true;
 }
 
 
@@ -634,6 +666,7 @@ void BaseController::SetStopMovement()
 //        MovementStack.pop();
 //    }
     PushMovement(STOP, 0.0);
+    stRobotData.StopMovement = true;
 }
 
 /***************************************************************************************************/
@@ -641,11 +674,13 @@ void BaseController::SetStopMovement()
 /***************************************************************************************************/
 void BaseController::SetMovement()
 {
+    stRobotData.StopMovement = false;
     while(!MovementStack.empty())
     {
         MovementStack.pop();
     }
     Stop();
+    
 }
 
 

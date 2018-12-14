@@ -33,6 +33,7 @@ DSA_loop_functions::DSA_loop_functions() :
     sim_time(0),
     score(0),
     PrintFinalScore(0),
+    SimulatorTicksperSec(0),
     m_pcRNG(NULL)
 {}
 
@@ -138,10 +139,10 @@ void DSA_loop_functions::PreStep()
         BaseController& cController2 = dynamic_cast<BaseController&>(cFootBot2.GetControllableEntity().GetController());
         
         BaseController::RobotData& stRobotDataCopy = cController2.GetRobotData();
-        if(stRobotDataCopy.Waypoint_Added == true)
-        {
-            stRobotDataStruct.push_back(stRobotDataCopy);
-        }
+//        if(stRobotDataCopy.Waypoint_Added == true)
+//        {
+//            stRobotDataStruct.push_back(stRobotDataCopy);
+//        }
         
         NewWayPointAdded |= stRobotDataCopy.Waypoint_Added;
         
@@ -180,8 +181,6 @@ void DSA_loop_functions::PreStep()
             BaseController::RobotData& sRobotDataprevious = cController.GetRobotData();
             BaseController::IntersectionData& sIntersectionDataprevious = cController.GetIntersectionData();
             
-//            cController1.SetHardStopMovement();
-//            cController.SetHardStopMovement();
             /* Get the hadndle to each next robot */
             for(CSpace::TMapPerType::iterator it1 = std::next(it, 1);
                 it1 != m_cFootbots.end();
@@ -208,98 +207,137 @@ void DSA_loop_functions::PreStep()
                     sRobotDatanext.AddedPoint = sRobotDatanext.WaypointStack.top();
                     
                     cController1.SetTarget(sRobotDatanext.AddedPoint);
-                    //                    cController1.SetMovement();
-                    cController1.SetHardStopMovement();
+                    sRobotDatanext.WaypointStackpopped = true;
+                    sRobotDatanext.TargetWaypoint = sRobotDatanext.AddedPoint;
+                    cController1.SetStopMovement();
                     sRobotDatanext.WaypointStack.pop();
+                    
+                }
+                
+                if(sRobotDataprevious.CollinearFlag !=1)
+                {
+                    if(sRobotDataprevious.WaypointStackpopped == true or sRobotDataprevious.GoingToOrFromNest == true)
+                    {
+                        
+                        GetPointAtSafeDistance(sRobotDatanext);
+                        Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
+                                          sRobotDatanext.StartWaypoint, PointChangeDirection,sIntersectionDatanext);
+                        if(sIntersectionDatanext.Intersection_flag == 1)
+                        {
+    
+                            IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
+                                                       sRobotDatanext,sIntersectionDatanext,1);
+                            cController.SetStopMovement();
+                            cController1.SetStopMovement();
+                        }
+                        else
+                        {
+                            Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
+                                              PointChangeDirection, PointAtSafeDistance,sIntersectionDatanext);
+    
+                            if(sIntersectionDatanext.Intersection_flag == 1)
+                            {
+    
+                                IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, PointChangeDirection,sRobotDataprevious,
+                                                           sRobotDatanext,sIntersectionDatanext,2);
+                                cController.SetStopMovement();
+                                cController1.SetStopMovement();
+                            }
+                        }
+                        
+                        
+                    }
+                    else if(sRobotDatanext.WaypointStackpopped == true or sRobotDatanext.GoingToOrFromNest == true)
+                    {
+                        
+                        GetPointAtSafeDistance(sRobotDataprevious);
+                        Find_Intersection(sRobotDataprevious.StartWaypoint, PointChangeDirection,
+                                          sRobotDatanext.StartWaypoint, sRobotDatanext.TargetWaypoint,sIntersectionDatanext);
+                        if(sIntersectionDatanext.Intersection_flag == 1)
+                        {
+                            
+                            IntersectionCollisionCheck(sRobotDatanext.StartWaypoint, sRobotDataprevious.StartWaypoint,
+                                                       sRobotDatanext, sRobotDataprevious,sIntersectionDatanext,1);
+                            cController.SetStopMovement();
+                            cController1.SetStopMovement();
+                        }
+                        else
+                        {
+                            Find_Intersection(PointChangeDirection, PointAtSafeDistance, sRobotDatanext.StartWaypoint,                      sRobotDatanext.TargetWaypoint, sIntersectionDatanext);
+                            
+                            if(sIntersectionDatanext.Intersection_flag == 1)
+                            {
+                                
+                                IntersectionCollisionCheck(sRobotDatanext.StartWaypoint, PointChangeDirection,
+                                                           sRobotDatanext,sRobotDataprevious, sIntersectionDatanext,2);
+                                cController.SetStopMovement();
+                                cController1.SetStopMovement();
+                            }
+                        }
+                        
+                        
+                    }
                     
                 }
                 
                 
 //                if(sRobotDataprevious.CollinearFlag !=1)
 //                {
-//
 //                    /* find intersection between paths of robots */
-//                    //                    Find_Intersection(sRobotDataprevious, sRobotDatanext, sIntersectionDatanext);
-//                    //
-//
-//                    //                    if(sIntersectionDatanext.Intersection_flag == 1)
-//                    //                    {
-//                    //                        /* take actions to avoid intersections */
-//                    //                        IntersectionCollisionCheck(sRobotDataprevious, sRobotDatanext, sIntersectionDatanext);
-//                    //                        cController.SetHardStopMovement();
-//                    //                        cController1.SetHardStopMovement();
-//                    //                        if(sRobotDatanext.Intersection_Adjustment == 1)
-//                    //                        {
-//                    //                            cController1.SetMovement();
-//                    //                        }
-//                    //                    }
-//                    // check intersection points for robot 1: Intersection for 2 segments
-//                    if(sRobotDataprevious.Waypoint_Added == true)
+//                    GetPointAtSafeDistance(sRobotDataprevious);
+//                    Find_Intersection(sRobotDataprevious.StartWaypoint, PointChangeDirection,
+//                                      sRobotDatanext.StartWaypoint, sRobotDatanext.TargetWaypoint,sIntersectionDatanext);
+//                    if(sIntersectionDatanext.Intersection_flag == 1)
 //                    {
-//                        GetPointAtSafeDistance(sRobotDataprevious);
-//                        Find_Intersection(sRobotDataprevious.StartWaypoint, PointChangeDirection,
+//                        IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
+//                                                   sRobotDatanext,sIntersectionDatanext);
+//                        cController.SetHardStopMovement();
+//                        cController1.SetHardStopMovement();
+//                    }
+//                    else
+//                    {
+//                        Find_Intersection(PointChangeDirection, PointAtSafeDistance,
 //                                          sRobotDatanext.StartWaypoint, sRobotDatanext.TargetWaypoint,sIntersectionDatanext);
 //                        if(sIntersectionDatanext.Intersection_flag == 1)
 //                        {
-//
-//                            IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
+//                            IntersectionCollisionCheck(PointChangeDirection, sRobotDatanext.StartWaypoint,sRobotDataprevious,
 //                                                       sRobotDatanext,sIntersectionDatanext);
-//                        }
-//                        else
-//                        {
-//                            Find_Intersection(PointChangeDirection, PointAtSafeDistance,
-//                                              sRobotDatanext.StartWaypoint, sRobotDatanext.TargetWaypoint,sIntersectionDatanext);
-//
-//                            if(sIntersectionDatanext.Intersection_flag == 1)
-//                            {
-//
-//                                IntersectionCollisionCheck(PointChangeDirection, sRobotDatanext.StartWaypoint,sRobotDataprevious,
-//                                                           sRobotDatanext,sIntersectionDatanext);
-//                            }
+//                            cController.SetStopMovement();
+//                            cController1.SetStopMovement();
 //                        }
 //                    }
-//                    // check intersection points for robot 1: Intersection for 2 segments
-//                    else if(sRobotDatanext.Waypoint_Added == true)
+//
+//                    GetPointAtSafeDistance(sRobotDatanext);
+//                    Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
+//                                      sRobotDatanext.StartWaypoint, PointChangeDirection,sIntersectionDatanext);
+//                    if(sIntersectionDatanext.Intersection_flag == 1)
 //                    {
-//                        GetPointAtSafeDistance(sRobotDatanext);
+//
+//                        IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
+//                                                   sRobotDatanext,sIntersectionDatanext);
+//                        cController.SetStopMovement();
+//                        cController1.SetStopMovement();
+//                    }
+//                    else
+//                    {
 //                        Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
-//                                          sRobotDatanext.StartWaypoint, PointChangeDirection,sIntersectionDatanext);
+//                                          PointChangeDirection, PointAtSafeDistance,sIntersectionDatanext);
+//
 //                        if(sIntersectionDatanext.Intersection_flag == 1)
 //                        {
 //
-//                            IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
+//                            IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, PointChangeDirection,sRobotDataprevious,
 //                                                       sRobotDatanext,sIntersectionDatanext);
-//                        }
-//                        else
-//                        {
-//                            Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
-//                                              PointChangeDirection, PointAtSafeDistance,sIntersectionDatanext);
-//
-//                            if(sIntersectionDatanext.Intersection_flag == 1)
-//                            {
-//
-//                                IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, PointChangeDirection,sRobotDataprevious,
-//                                                           sRobotDatanext,sIntersectionDatanext);
-//                            }
+//                            cController.SetStopMovement();
+//                            cController1.SetStopMovement();
 //                        }
 //                    }
-//
-//
-//
+//                }// end of if(ptr.collinearflag!=1)
+
 //                }
-                
-                cController1.SetHardStopMovement();
-            }
-            cController.SetHardStopMovement();
-          
-            /* end of inner for loop */
             
-            //            sRobotDataprevious.pathcheck = true;
-            //            cController.SetMovement();
-        
-            
-        }
-        /* end of outer for loop */
+            } /* end of inner for loop */
+        } /* end of outer for loop */
         for(CSpace::TMapPerType::iterator it5 = m_cFootbots.begin();
             it5 != m_cFootbots.end();
             ++it5)
@@ -1208,6 +1246,8 @@ void DSA_loop_functions::CheckCollinearity(BaseController::RobotData& ptr1, Base
     
     ptr1.CollinearFlag = 0;
     ptr2.CollinearFlag = 0;
+    ptr1.WaypointStackpopped = false;
+    ptr2.WaypointStackpopped = false;
 
 //    distBetweenTargets = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
 //    distBetweenStartPoints = CalculateDistance(ptr1.StartWaypoint, ptr2.StartWaypoint);
@@ -1251,10 +1291,21 @@ void DSA_loop_functions::CheckCollinearity(BaseController::RobotData& ptr1, Base
     {
         if(ptr1.TargetWaypoint == NestPosition and ptr2.TargetWaypoint != NestPosition)
         {
+            /* check if robot 2 target point is between robot 1 start and target point */
+            argos::Real distance_1 = CalculateDistance(ptr1.StartWaypoint, ptr2.TargetWaypoint);
+            argos::Real distance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
+            argos::Real distance_Total = CalculateDistance(ptr1.StartWaypoint, ptr1.TargetWaypoint);
+    
+//
+//            if(((distance_Total - 0.01) <= distance_1 + distance_2) and ((distance_Total + 0.01) >= distance_1 + distance_2))
+//            {
+            
             // ptr 1 is  not in inner spiral. ptr2 is in inner spiral
 
-            if((ptr1.StartWaypoint.GetX() > ptr2.StartWaypoint.GetX()) and
-               (ptr1.StartWaypoint.GetY() > ptr2.StartWaypoint.GetY()))
+            if(((ptr1.StartWaypoint.GetX() > ptr2.StartWaypoint.GetX()) and
+               (ptr1.StartWaypoint.GetY() > ptr2.StartWaypoint.GetY())) or
+               (((distance_Total - 0.01) <= distance_1 + distance_2) and
+                ((distance_Total + 0.01) >= distance_1 + distance_2)))
             {
                 /* check if robot 1 start, target and robot 2 target points are collinear */
                 Real Area_R1R2Goal =  ptr1.StartWaypoint.GetX() * (TargetPoint2.GetY() - TargetPoint1.GetY()) +
@@ -1291,6 +1342,15 @@ void DSA_loop_functions::CheckCollinearity(BaseController::RobotData& ptr1, Base
                 }
             }
         }
+        
+//        else if(ptr1.TargetWaypoint == NestPosition and ptr2.TargetWaypoint == NestPosition)
+//        {
+//            distBetweenTargets = CalculateDistance(TargetPoint1, TargetPoint2);
+//            if(distBetweenTargets < NestRadiusSquared)
+//            {
+//                AddNewWayPoint(ptr1, ptr2);
+//            }
+//        }
 
      }
 //    else if(ptr1.TargetWaypoint == NestPosition and ptr2.TargetWaypoint == NestPosition)
@@ -1524,30 +1584,40 @@ Real DSA_loop_functions::CalculateAngleBetweenRobotCourse(BaseController::RobotD
 //    argos::Real AngleRobotCourse = abs(180 - (abs(headingToTargetR1.GetValue()) + abs(headingToTargetR2.GetValue())));
 //    argos::Real AngleRobotCourse = abs((abs(headingToTargetR1.GetValue()) - abs(headingToTargetR2.GetValue())));
     
-    argos::CRadians headingToTargetR1 = (ptr1.TargetWaypoint - ptr1.StartWaypoint).Angle();
-    argos::CRadians headingToTargetR2 = (ptr2.TargetWaypoint - ptr2.StartWaypoint).Angle();
+    argos::Real angle;
+    CVector2 v1, v2;
+    Real v1_length, v2_length;
+    
+//    acos((v1 DOT v2)/(|v1|*|v2|))
+    
+    v1 = (ptr1.TargetWaypoint - ptr1.StartWaypoint);
+    v2 = (ptr2.TargetWaypoint - ptr2.StartWaypoint);
+    v1_length = v1.Length();
+    v2_length = v2.Length();
+    angle = acos((v1.DotProduct(v2))/(v1_length * v2_length));
     
     
-
-    CDegrees angle1 = ToDegrees(headingToTargetR1);
-    CDegrees angle2 = ToDegrees(headingToTargetR2);
-
-    ptr1.HeadingAngle = ToDegrees(headingToTargetR1);
-
-    ptr2.HeadingAngle = ToDegrees(headingToTargetR2);
+//    argos::CRadians headingToTargetR1 = (ptr1.TargetWaypoint - ptr1.StartWaypoint).Angle();
+//    argos::CRadians headingToTargetR2 = (ptr2.TargetWaypoint - ptr2.StartWaypoint).Angle();
+//
+//
+//
+//    CDegrees angle1 = ToDegrees(headingToTargetR1);
+//    CDegrees angle2 = ToDegrees(headingToTargetR2);
+//
+//    ptr1.HeadingAngle = ToDegrees(headingToTargetR1);
+//
+//    ptr2.HeadingAngle = ToDegrees(headingToTargetR2);
+//
+//    CRadians res_angle_radians = (headingToTargetR1 - headingToTargetR2).SignedNormalize();
+//
+//    argos::Real AngleRobotCourse = ToDegrees(res_angle_radians).GetValue();
     
-    CRadians res_angle_radians = (headingToTargetR1 - headingToTargetR2).SignedNormalize();
-//    argos::Real res_angle = abs(abs((ToDegrees(headingToTargetR1).GetValue())) - abs((ToDegrees(headingToTargetR2).GetValue())));
-//    CDegrees res_angle_degrees = ToDegrees(res_angle_radians);
-//    argos::Real AngleRobotCourse = res_angle;
-    argos::Real AngleRobotCourse = ToDegrees(res_angle_radians).GetValue();
+    argos::CRadians angle_readians = CRadians(angle);
+    argos::Real AngleRobotCourse = ToDegrees(angle_readians).GetValue();
     
     AngleRobotCourse  = abs(AngleRobotCourse);
-//    if(AngleRobotCourse < 0)
-//    {
-//        AngleRobotCourse = -1 * AngleRobotCourse;
-//    }
-//    argos::Real AngleRobotCourse = ToDegrees((headingToTargetR1.GetValue() - headingToTargetR2.GetValue()).SignedNormalize()).GetValue();
+
     return AngleRobotCourse;
     
 }
@@ -1596,6 +1666,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
     argos::Real x, y;
     argos::UInt8 i;
     char previous_direction;
+    
     x = ptr.StartWaypoint.GetX();
     y = ptr.StartWaypoint.GetY();
     
@@ -1603,7 +1674,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
     
     if(ptr.pattern.size() > 0)
     {
-        for(i=1;i<4;i++)
+        for(i=1;i<7;i++)
         {
             if((ptr.pattern.size() - i) > 0)
             {
@@ -1611,6 +1682,10 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
                 if(i == 1)
                 {
                     previous_direction = direction_last;
+                }
+                if(i==3 && (PointChangeDirection == ptr.StartWaypoint))
+                {
+                   PointChangeDirection.Set(x, y);
                 }
                 
                 switch(direction_last)
@@ -1622,7 +1697,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
                         {
                             PointChangeDirection.Set(x,y);
                         }
-                        x = x + SearcherGap;
+                        x = x + Searcher_Gap;
                         y = y;
                         previous_direction = direction_last;
                         break;
@@ -1632,7 +1707,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
                         {
                             PointChangeDirection.Set(x,y);
                         }
-                        x = x - SearcherGap;
+                        x = x - Searcher_Gap;
                         y = y;
                         previous_direction = direction_last;
 //                        x = ptr.StartWaypoint.GetX() - SearcherGap;
@@ -1646,7 +1721,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
                             PointChangeDirection.Set(x,y);
                         }
                         x = x;
-                        y = y - SearcherGap;
+                        y = y - Searcher_Gap;
 //                        x = ptr.StartWaypoint.GetX();
 //                        y = ptr.StartWaypoint.GetY() - SearcherGap;
                         previous_direction = direction_last;
@@ -1658,7 +1733,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
                             PointChangeDirection.Set(x,y);
                         }
                         x = x;
-                        y = y + SearcherGap;
+                        y = y + Searcher_Gap;
 //                        x = ptr.StartWaypoint.GetX();
 //                        y = ptr.StartWaypoint.GetY()+ SearcherGap;
                         previous_direction = direction_last;
@@ -1667,7 +1742,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
             }
         }
 
-        PointAtSafeDistance.Set(x, y);
+//        PointAtSafeDistance.Set(x, y);
     }
     
     else if(ptr.pattern.size() == 0)
@@ -1675,7 +1750,7 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
         /* do nothing */
 
     }
-    
+    PointAtSafeDistance.Set(x, y);
 }
 
 /*****************************************************************************************************************/
@@ -1684,11 +1759,15 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
 void DSA_loop_functions::AddNewWayPoint(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2)
 {
     argos::CVector2 AddedWaypoint;
+    argos::UInt16 TicksToWait_Robot1;
     argos::Real dist, x, y, radius, t1, t2;
-    argos::Real theta;
+    argos::Real theta, DistanceToTarget_Robot1, DistRobot2NeedToTravel;
     argos::CVector3 a, b, c;
     argos::CRadians headingAngleTowardsTarget;
 
+     // add some stop time to allow robot 2 turn and move to waypoint
+    ptr1.StopTurningTime += 10;
+    
 //    if(ptr1.StartWaypoint.GetX() < ptr2.StartWaypoint.GetX())
 //    if((ptr1.StartWaypoint.GetX() > ptr2.StartWaypoint.GetX()) and
 //       (ptr1.StartWaypoint.GetY() > ptr2.StartWaypoint.GetY()))
@@ -1727,18 +1806,31 @@ void DSA_loop_functions::AddNewWayPoint(BaseController::RobotData& ptr1, BaseCon
     //if z coordinate is +ve, then ptr1 is to the left of ptr2
     if(c.GetZ() > 0)
     {
-        theta = ToRadians(CDegrees(135.0f)).GetValue() + headingAngleTowardsTarget.GetValue();
+        theta = ToRadians(CDegrees(135.0f)).GetValue() - headingAngleTowardsTarget.GetValue();
+        dist = CalculateDistance(ptr1.StartWaypoint, TargetPoint1);
+
     }
     else
     {
        theta = ToRadians(CDegrees(45.0f)).GetValue() + headingAngleTowardsTarget.GetValue();
+        dist = CalculateDistance(ptr2.StartWaypoint, TargetPoint2);
     }
     
-    dist = CalculateDistance(ptr2.StartWaypoint, TargetPoint2);
+    // distance is to and go dist from start to target point
+//    DistanceToTarget_Robot1 = 2 * (CalculateDistance(ptr1.StartWaypoint, TargetPoint1));
+//    TicksToWait_Robot1 = 2 * CalculateTotalTime(ptr1, TargetPoint1, ptr1.StartWaypoint);
+ 
+//    DistRobot2NeedToTravel = DistanceToTarget_Robot1 * 0.5;
+//    DistRobot2NeedToTravel = (TicksToWait_Robot1 * ptr2.fLinearWheelSpeed)/SimulatorTicksperSec;
+    
+//    dist = CalculateDistance(ptr1.StartWaypoint, TargetPoint1);
     
 //    radius = (3/4) * dist;
     
     radius = (dist * sqrt(2))/2;
+    
+//    radius = DistRobot2NeedToTravel * 0.5;
+    
     // get the radius as per 45deg - 45deg - 90deg right angled triangle properties
     //if hypotenuse is c, then the sides of triangle are ((c * sqrt(2) )/ 2)
     
@@ -1766,6 +1858,7 @@ void DSA_loop_functions::AddNewWayPoint(BaseController::RobotData& ptr1, BaseCon
         /* add a way point before the final goal */
         ptr2.WaypointStack.push(AddedWaypoint);
 
+//        ptr2.Waypoint_Added = true;
         ptr2.WaypointCounter++;
     }
     
@@ -1870,29 +1963,70 @@ void DSA_loop_functions::Find_Intersection(CVector2 pt1, CVector2 pt2, CVector2 
 //                                                    BaseController::IntersectionData &ptr3){
 void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
                                                     BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
-                                                    BaseController::IntersectionData &ptr3)
+                                                    BaseController::IntersectionData &ptr3, argos::UInt8 index)
 {
-    argos::UInt16 TicksToWait_Robot1, TicksToWait_Robot2, TicksToWaitforSafedistance, TimeToIntersection, TimeDiff;
-    argos::Real DistanceToIntersection_Robot1, DistanceToIntersection_Robot2, IntersectionDistance;
+    argos::UInt16 TicksToWait_Robot1, TicksToWait_Robot2, TicksToWaitforSafedistance, TimeToIntersection, TimeDiff, time_turn_safe_dist,            TimeToTurn_2;
+    argos::Real DistanceToIntersection_Robot1, DistanceToIntersection_Robot2, IntersectionDistance, DistanceFromStartPoint;
     argos::Real AdjustedVelocity;
     bool Intersection_flag;
 
-
+    ptr1.Intial_TurningWaitTime = 0;
+    ptr2.Intial_TurningWaitTime = 0;
     /* Get the distance between start point and intersection point */
+    if(index == 2)
+    {
+        DistanceFromStartPoint = CalculateDistance(ptr2.StartWaypoint, pt2);
+        if((ptr2.StartWaypoint - ptr2.TargetWaypoint).Angle() != (pt2 - ptr3.IntersectionPoint).Angle())
+        {
+//            argos::CVector2 v1 = (ptr2.TargetWaypoint - ptr2.StartWaypoint);
+//            argos::CVector2 v2 = (pt2 - ptr3.IntersectionPoint);
+//            argos::Real length_1 = v1.Length();
+//            argos::Real length_2 = v2.Length();
+//
+//            argos::Real angle = acos((v1.DotProduct(v2))/(length_1 * length_2));
+//
+//            argos::CRadians angle_readians = CRadians(angle);
+//            argos::Real AngleRobotCourse = ToDegrees(angle_readians).GetValue();
+//
+//            AngleRobotCourse  = abs(AngleRobotCourse);
+          
+//            TimeToTurn_2 = GetTimeToTurn(AngleRobotCourse, ptr2.fBaseAngularWheelSpeed);
+            TimeToTurn_2 = 2*GetTimeToTurn(90, ptr2.fBaseAngularWheelSpeed);
+        }
+        else
+        {
+            
+            TimeToTurn_2 = 0;
+        }
+    }
+    else
+    {
+        DistanceFromStartPoint = 0;
+        TimeToTurn_2 = 0;
+    }
     DistanceToIntersection_Robot1 = CalculateDistance(pt1, ptr3.IntersectionPoint);
     DistanceToIntersection_Robot2 = CalculateDistance(pt2, ptr3.IntersectionPoint);
+//    DistanceToIntersection_Robot2 = CalculateDistance(pt2, ptr3.IntersectionPoint) + DistanceFromStartPoint;
+//    DistanceToIntersection_Robot2 = CalculateDistance(pt2, ptr3.IntersectionPoint);
 
     /* calculate the time required to reach the intersection point */
-    //    TicksToWait_Robot1 = GetTicksToWait(DistanceToIntersection_Robot1, ptr1.fLinearWheelSpeed) + ptr1.StopTurningTime;
-    TicksToWait_Robot1 = CalculateTotalTime(ptr1, ptr3.IntersectionPoint, pt1);
-    TicksToWait_Robot2 = CalculateTotalTime(ptr2, ptr3.IntersectionPoint, pt2);
-    //    TicksToWait_Robot2 = GetTicksToWait(DistanceToIntersection_Robot2, ptr2.fLinearWheelSpeed)+ ptr2.StopTurningTime;
+    argos::Real AngleToTurn = ToDegrees((ptr1.StartWaypoint - TargetPoint1).Angle()).GetValue();
+//    argos::UInt16 TimeToTurn_1 = GetTimeToTurn(AngleToTurn, ptr1.fBaseAngularWheelSpeed);
+    argos::UInt16 TimeToTurn_1 = GetTimeToTurn(180, ptr1.fBaseAngularWheelSpeed);
+
+    TicksToWait_Robot1 = GetTicksToWait(DistanceToIntersection_Robot1, ptr1.fLinearWheelSpeed) + ptr1.StopTurningTime + TimeToTurn_1;
 
 
+    TicksToWait_Robot2 = GetTicksToWait(DistanceToIntersection_Robot2, ptr2.fLinearWheelSpeed) + ptr2.StopTurningTime + TimeToTurn_2;
+    
     TimeDiff = abs(TicksToWait_Robot1 - TicksToWait_Robot2);
-
-    TicksToWaitforSafedistance = GetTicksToWait(Safedistance , MaxLinearSpeed);
-
+    
+    TicksToWaitforSafedistance = (GetTicksToWait(Safedistance , MaxLinearSpeed) + GetTimeToTurn(180, ptr1.fBaseAngularWheelSpeed)) + 10;
+    
+    ptr1.Intial_TurningWaitTime = TicksToWait_Robot1;
+    ptr2.Intial_TurningWaitTime = TicksToWait_Robot2;
+    ptr1.Priority = ptr1.id_robot;
+    ptr2.Priority = ptr2.id_robot;
 
     //if the difference between the times is equal to safe distance time between two robots
     if(TimeDiff <= TicksToWaitforSafedistance)
@@ -1900,72 +2034,166 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
 
         /* there is a chance of collision */
         /* slow down the velocity of robot 2 as its priority is lower */
-
-        if(DistanceToIntersection_Robot1 < DistanceToIntersection_Robot2)
-        {
-            IntersectionDistance = DistanceToIntersection_Robot2;
-            TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
-            AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
-
-            if(AdjustedVelocity < MinLinearSpeed)
-            {
-                AdjustedVelocity = MinLinearSpeed;
-                Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-                Real stop_time = abs(Time - TimeToIntersection);
-                ptr2.StopTurningTime += stop_time;
-            }
-            ptr2.fLinearWheelSpeed = AdjustedVelocity;
-            ptr2.Intersection_Adjustment = 1;
-
-        }
-        /* slow down the velocity of robot 1 as its priority is lower */
-        else if(DistanceToIntersection_Robot2 < DistanceToIntersection_Robot1)
+        
+        if((ptr1.GoingToOrFromNest == true &&
+           (DistanceToIntersection_Robot1 < DistanceToIntersection_Robot2)) or
+            ptr1.WaypointStackpopped == true)
         {
             IntersectionDistance = DistanceToIntersection_Robot1;
-            TimeToIntersection = TicksToWait_Robot2 + TicksToWaitforSafedistance;
+            TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
+            AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+            
+            if(AdjustedVelocity < MinLinearSpeed)
+            {
+                AdjustedVelocity = MaxLinearSpeed;
+//                Real Time = GetTicksToWait(IntersectionDistance , MaxLinearSpeed);
+//                Real stop_time = abs(Time - TimeToIntersection);
+//                Real stop_time = 2 * (TimeDiff + TicksToWaitforSafedistance);
+                //                ptr2.StopTurningTime += 200;
+//                ptr2.StopTurningTime += ((TimeToIntersection)+GetTimeToTurn(180, ptr2.fBaseAngularWheelSpeed));
+                ptr2.StopTurningTime += ((TimeToIntersection));
+//                ptr2.StopTurningTime += (stop_time);
+            }
+            
+            ptr2.fLinearWheelSpeed = AdjustedVelocity;
+
+        }
+        else if((ptr2.GoingToOrFromNest == true &&
+                (DistanceToIntersection_Robot2 < DistanceToIntersection_Robot1))
+                 or ptr2.WaypointStackpopped == true)
+        {
+            IntersectionDistance = DistanceToIntersection_Robot1;
+            TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
             AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
             if(AdjustedVelocity < MinLinearSpeed)
             {
-                AdjustedVelocity = MinLinearSpeed;
-                Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-                Real stop_time = abs(Time - TimeToIntersection);
-                ptr1.StopTurningTime += stop_time;
+                AdjustedVelocity = MaxLinearSpeed;
+//                Real Time = GetTicksToWait(IntersectionDistance , MaxLinearSpeed);
+//                Real stop_time = 2 * (TimeDiff + TicksToWaitforSafedistance);
+//                Real stop_time = abs(Time - TimeToIntersection);
+//                ptr1.StopTurningTime += ((TimeToIntersection)+GetTimeToTurn(180, ptr1.fBaseAngularWheelSpeed));
+                ptr1.StopTurningTime += ((TimeToIntersection));
+//                ptr1.StopTurningTime += (stop_time);
             }
             ptr1.fLinearWheelSpeed = AdjustedVelocity;
-//            ptr1.Intersection_Adjustment = 1;
         }
-        else{
-            if(ptr1.GoingToNest)
+        else
+        {
+            if((DistanceToIntersection_Robot1 < DistanceToIntersection_Robot2) and ptr1.GoingToOrFromNest == false)
             {
-                IntersectionDistance = DistanceToIntersection_Robot2;
-                TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
-                AdjustedVelocity = (IntersectionDistance/ TimeToIntersection) * SimulatorTicksperSec;
-
-                if(AdjustedVelocity < MinLinearSpeed)
-                {
-                    AdjustedVelocity = MinLinearSpeed;
-                    Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-                    Real stop_time = abs(Time - TimeToIntersection);
-                    ptr2.StopTurningTime += stop_time;
-                }
-                ptr2.fLinearWheelSpeed = AdjustedVelocity;
-//                ptr2.Intersection_Adjustment = 1;
-            }
-            else{
                 IntersectionDistance = DistanceToIntersection_Robot1;
-                TimeToIntersection = TicksToWait_Robot2 + TicksToWaitforSafedistance;
+                TimeToIntersection = TicksToWaitforSafedistance;
                 AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
                 if(AdjustedVelocity < MinLinearSpeed)
                 {
-                    AdjustedVelocity = MinLinearSpeed;
-                    Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-                    Real stop_time = abs(Time - TimeToIntersection);
-                    ptr1.StopTurningTime += stop_time;
+                    AdjustedVelocity = MaxLinearSpeed;
+                    ptr1.StopTurningTime += ((TimeToIntersection));
+                }
+                ptr2.fLinearWheelSpeed = AdjustedVelocity;
+            
+            }
+            else if((DistanceToIntersection_Robot2 < DistanceToIntersection_Robot2) and ptr2.GoingToOrFromNest == false)
+            {
+                IntersectionDistance = DistanceToIntersection_Robot2;
+                TimeToIntersection = TicksToWaitforSafedistance;
+                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+                if(AdjustedVelocity < MinLinearSpeed)
+                {
+                    AdjustedVelocity = MaxLinearSpeed;
+                    ptr1.StopTurningTime += ((TimeToIntersection));
                 }
                 ptr1.fLinearWheelSpeed = AdjustedVelocity;
-//                ptr1.Intersection_Adjustment = 1;
+                
+            }
+            else
+            {
+                IntersectionDistance = DistanceToIntersection_Robot1;
+                TimeToIntersection = TicksToWaitforSafedistance;
+                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+                if(AdjustedVelocity < MinLinearSpeed)
+                {
+                    AdjustedVelocity = MaxLinearSpeed;
+                    ptr1.StopTurningTime += ((TimeToIntersection));
+                }
+                ptr2.fLinearWheelSpeed = AdjustedVelocity;
+                
             }
         }
+        
+        
+
+//        else
+//        {
+//            if(DistanceToIntersection_Robot1 < DistanceToIntersection_Robot2)
+//            {
+//                IntersectionDistance = DistanceToIntersection_Robot2;
+//                TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
+//                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//
+//                if(AdjustedVelocity < MinLinearSpeed)
+//                {
+////                    AdjustedVelocity = MinLinearSpeed;
+//                    Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
+//                    Real stop_time = abs(Time - TimeToIntersection);
+//    //                ptr2.StopTurningTime += 200;
+//                    ptr2.StopTurningTime += (stop_time + time_turn_safe_dist);
+//                }
+//                ptr2.fLinearWheelSpeed = AdjustedVelocity;
+//                ptr2.Intersection_Adjustment = 1;
+//
+//            }
+//            /* slow down the velocity of robot 1 as its priority is lower */
+//            else if(DistanceToIntersection_Robot2 < DistanceToIntersection_Robot1)
+//            {
+//                IntersectionDistance = DistanceToIntersection_Robot1;
+//                TimeToIntersection = TicksToWait_Robot2 + TicksToWaitforSafedistance;
+//                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//                if(AdjustedVelocity < MinLinearSpeed)
+//                {
+////                    AdjustedVelocity = MinLinearSpeed;
+//                    Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
+//                    Real stop_time = abs(Time - TimeToIntersection);
+//    //                ptr1.StopTurningTime += 200;
+//                    ptr1.StopTurningTime += (stop_time + time_turn_safe_dist);
+//                }
+//                ptr1.fLinearWheelSpeed = AdjustedVelocity;
+//    //            ptr1.Intersection_Adjustment = 1;
+//            }
+//            else{
+//                if(ptr1.GoingToNest)
+//                {
+//                    IntersectionDistance = DistanceToIntersection_Robot2;
+//                    TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
+//                    AdjustedVelocity = (IntersectionDistance/ TimeToIntersection) * SimulatorTicksperSec;
+//
+//                    if(AdjustedVelocity < MinLinearSpeed)
+//                    {
+////                        AdjustedVelocity = MinLinearSpeed;
+//                        Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
+//                        Real stop_time = abs(Time - TimeToIntersection);
+//    //                    ptr2.StopTurningTime += 200;
+//                        ptr2.StopTurningTime += (stop_time + time_turn_safe_dist);
+//                    }
+//                    ptr2.fLinearWheelSpeed = AdjustedVelocity;
+//    //                ptr2.Intersection_Adjustment = 1;
+//                }
+//                else{
+//                    IntersectionDistance = DistanceToIntersection_Robot1;
+//                    TimeToIntersection = TicksToWait_Robot2 + TicksToWaitforSafedistance;
+//                    AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//                    if(AdjustedVelocity < MinLinearSpeed)
+//                    {
+////                        AdjustedVelocity = MinLinearSpeed;
+//                        Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
+//                        Real stop_time = abs(Time - TimeToIntersection);
+//    //                    ptr1.StopTurningTime += 200;
+//                        ptr1.StopTurningTime += (stop_time + time_turn_safe_dist);
+//                    }
+//                    ptr1.fLinearWheelSpeed = AdjustedVelocity;
+//    //                ptr1.Intersection_Adjustment = 1;
+//                }
+//            }
+//        }
 
     }
 

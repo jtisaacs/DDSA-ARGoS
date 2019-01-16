@@ -7,6 +7,7 @@
   <!-- ************************* -->
   <framework>
     <system     threads="0" />
+<!--<system threads="2" method="balance_quantity" />-->
     <experiment length="1800"
                 ticks_per_second="32"
                 random_seed="124"/>
@@ -46,8 +47,8 @@
       <params>
 
 	<!-- Modify TargetDistanceTolerance to Simulate Error -->
-        <settings ProbTargetDetection    = "0.01"
-	          NumberOfRobots          = "3"
+        <settings ProbTargetDetection    = "0.1"
+	              NumberOfRobots          = "3"
                   NumberOfSpirals         = "30"
                   NestDistanceTolerance = "0.01"  
                   NestAngleTolerance = "0.05"  
@@ -55,12 +56,12 @@
                   TargetAngleTolerance = "0.05"
                   FoodDistanceTolerance   = "0.13"
                   SearcherGap             = "0.18"
-		  SearchStepSize          = "0.08"
+		          SearchStepSize          = "0.08"
                   RobotForwardSpeed       = "16.0"
                   RobotRotationSpeed      = "8.0"
-		  DestinationNoiseStdev = "0.0"
-		  PositionNoiseStdev = "0.0"
-		  ResultsDirectoryPath = "results/"/>
+		          DestinationNoiseStdev = "0.0"
+                  PositionNoiseStdev = "0.0"
+                  ResultsDirectoryPath = "results/"/>
 	          
       </params>
 

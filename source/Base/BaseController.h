@@ -40,6 +40,7 @@ class BaseController : public argos::CCI_Controller {
         bool CheckStopTime();
         void SetStopMovement();
         void SetHardStopMovement();
+        void ResetIntersectionData();
         /*  time calculation functions */
         size_t SimulationTick();
         size_t SimulationTicksPerSecond();
@@ -85,6 +86,7 @@ class BaseController : public argos::CCI_Controller {
             argos::CDegrees HeadingAngle;
             std::stack<argos::CVector2>WaypointStack;
             std::vector<char> pattern;
+            argos::UInt16 TicksPerSecond;
         };
     
         struct IntersectionData{

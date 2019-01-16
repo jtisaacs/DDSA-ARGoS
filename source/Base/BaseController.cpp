@@ -17,7 +17,7 @@ BaseController::BaseController() :
     TargetAngleTolerance(0.04),
     SearchStepSize(0.16),
     RobotForwardSpeed(16.0),
-    RobotRotationSpeed(4.0),
+    RobotRotationSpeed(8.0),
     TicksToWaitWhileMoving(0.0),
     CurrentMovementState(STOP),
     heading_to_nest(false),
@@ -516,6 +516,14 @@ bool BaseController::CheckStopTime()
     return RobotStopped;
 }
 
+void BaseController::ResetIntersectionData() {
+    
+    st_IntersectionData.Intersection_flag = false;
+    
+    st_IntersectionData.IntersectionPoint.Set(0,0);
+    
+}
+
 void BaseController::Move() {
 
 
@@ -631,6 +639,7 @@ size_t BaseController::SimulationTick() {
 }
 
 size_t BaseController::SimulationTicksPerSecond() {
+     stRobotData.TicksPerSecond = LF.GetSimulator().GetPhysicsEngine("default").GetInverseSimulationClockTick();
     return LF.GetSimulator().GetPhysicsEngine("default").GetInverseSimulationClockTick();
 }
 

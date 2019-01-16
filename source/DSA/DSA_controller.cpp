@@ -294,6 +294,7 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
     argos::LOG<<"Ticks calculated for intersection: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
     argos::LOG<<"Robot ID inter: "<<stRobotData.Priority<<std::endl;
+ 
 //    argos::LOG<<"Safe distanace Ticks: "<<stRobotData.WaypointCounter<<std::endl;
 //    argos::LOG<<"Simulator TicksPerSec: "<<loopFunctions->SimulatorTicksperSec<<std::endl;
     
@@ -352,12 +353,12 @@ void DSA_controller::ControlStep()
     }
 
   previous_position = GetPosition();
-  
+//  argos::CSpace::TMapPerType& m_cFootbots = loopFunctions->GetSpace().GetEntitiesByType("foot-bot");
     
   /* Continue in a sprial */
   if( DSA == SEARCHING )
   {
-      SetHoldingFood();
+//      SetHoldingFood();
       SetIsHeadingToNest(false);
       stRobotData.GoingToNest = false;
       SetHoldingFood();
@@ -648,13 +649,13 @@ void DSA_controller::SetTargetW(char x){
 void DSA_controller::SetHoldingFood(){
     if(IsHoldingFood() == false) 
       {
-	if(rand()*1.0/RAND_MAX < ProbTargetDetection) {
-	
-        vector <CVector2> newFoodList; 
+
+    if(rand()*1.0/RAND_MAX < ProbTargetDetection) {
+        vector <CVector2> newFoodList;
         size_t i = 0;
         for (i = 0; i < loopFunctions->FoodList.size(); i++)
 	  {
-            if ((GetPosition()-loopFunctions->FoodList[i]).SquareLength() < FoodDistanceTolerance && !isHoldingFood)
+        if (((GetPosition()-loopFunctions->FoodList[i]).SquareLength() < FoodDistanceTolerance) && !isHoldingFood)
 	      {
               isHoldingFood = true;
               SetHardStopMovement();

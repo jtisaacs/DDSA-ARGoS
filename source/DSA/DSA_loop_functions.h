@@ -7,6 +7,7 @@
 #include <source/DSA/DSA_controller.h>
 #include <source/Base/BaseController.h>
 
+
 using namespace argos;
 using namespace std;
 
@@ -72,6 +73,11 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     argos::CVector2 CalculateTargePoint(BaseController::RobotData& ptr);
     
     void GetPointAtSafeDistance(BaseController::RobotData& ptr);
+    
+    argos::Real CalculateAngleBetweenVectors(CVector3 v1, CVector3 v2);
+    argos::CVector3 GetVectorFromTwoPoints(argos::CVector2 StartPoint, argos::CVector2 EndPoint);
+    argos:: Real ShortestDistTwoVectors(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2);
+    
     
     public:
         bool FirstCheck;
@@ -161,9 +167,10 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     const argos::Real MinLinearSpeed = 12;
     const argos::Real Robot_Gap_Distance = 0.2f;
     const argos::UInt16 MaximumWaypoint = 5;
-    const argos::Real OverlappingCourseAngle = 30.0f;
+    const argos::Real OverlappingCourseAngle = 20.0f;
     argos::CRange<argos::Real>   ForageRangeX_1;
     argos::CRange<argos::Real>   ForageRangeY_1;
+    argos::Real FOOTBOT_RADIUS   = 0.085036758f;
 };
 
 #endif /* DSA_LOOP_FUNCTIONS_H */

@@ -65,7 +65,7 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector2 StartWaypoint;
             argos::CVector2 AddedPoint;
             argos::UInt16 id_robot;
-            argos::UInt16 Priority;
+            argos::Real Priority;
             argos::UInt16 WaypointCounter;
             argos::Real fBaseAngularWheelSpeed;
             argos::Real fLinearWheelSpeed;
@@ -86,7 +86,13 @@ class BaseController : public argos::CCI_Controller {
             argos::CDegrees HeadingAngle;
             std::stack<argos::CVector2>WaypointStack;
             std::vector<char> pattern;
-            argos::UInt16 TicksPerSecond;
+            argos::CVector2 IntersectionPt1;
+            argos::CVector2 IntersectionPt2;
+            argos::CVector3 CrossProduct;
+            argos::UInt16 IntersectionTime;
+            argos::CVector2 vect1;
+            argos::CVector2 vect2;
+
         };
     
         struct IntersectionData{

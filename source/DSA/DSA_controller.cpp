@@ -287,13 +287,15 @@ void DSA_controller::CopyPatterntoTemp()
  *****/
 void DSA_controller::ControlStep() 
 {
-//    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
-    argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
+    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
+    argos::LOG<<"Ticks: "<<loopFunctions->sim_time<<std::endl;
+    
+
 //    argos::LOG<<"Robot ID: "<<RobotNumber<<std::endl;
     
 //    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
-    argos::LOG<<"Ticks calculated for intersection: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
-    argos::LOG<<"Robot ID inter: "<<stRobotData.Priority<<std::endl;
+
+//    argos::LOG<<"Robot ID inter: "<<stRobotData.Priority<<std::endl;
  
 //    argos::LOG<<"Safe distanace Ticks: "<<stRobotData.WaypointCounter<<std::endl;
 //    argos::LOG<<"Simulator TicksPerSec: "<<loopFunctions->SimulatorTicksperSec<<std::endl;
@@ -301,42 +303,63 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Holding food flag: "<< IsHoldingFood()<<std::endl;
 
 //    argos::LOG<<"Return Position: "<<ReturnPosition<<std::endl;
-    argos::LOG<<"DSA State: "<<DSA<<std::endl;
+//    argos::LOG<<"DSA State: "<<DSA<<std::endl;
 ////    argos::LOG<<"movemnt state: "<<CurrentMovementState<<std::endl;
 //    argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
 //    argos::LOG<<"Steps To Activate Algorithm: "<<StepsToActivateAlgorithm<<std::endl;
-    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
-    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
+   
 //     argos::LOG<<"Algorithm Checked: "<<stRobotData.Checked<<std::endl;
+    //    argos::LOG<<"Point Change Direction: "<<loopFunctions->PointChangeDirection<<std::endl;
+    //    argos::LOG<<"Point Safe Distance: "<<loopFunctions->PointAtSafeDistance<<std::endl;
     
-    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
-//    argos::LOG<<"Point Change Direction: "<<loopFunctions->PointChangeDirection<<std::endl;
-//    argos::LOG<<"Point Safe Distance: "<<loopFunctions->PointAtSafeDistance<<std::endl;
+    //    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
+    //    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
+    //    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
+    //////    argos::LOG<<"Target reached: "<<stRobotData.WaypointReached<<std::endl;
+    //    argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
+    //    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
+    //    argos::LOG<<"Intersection point change direction: "<<stRobotData.IntersectionPt1<<std::endl;
+    //    argos::LOG<<"Intersection point at safe dist: "<<stRobotData.IntersectionPt2<<std::endl;
     
+    //    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
+    //
+    //    argos::LOG<<"Robot Course Angle: "<<stRobotData.InitialOrientation<<std::endl;
+    //    argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
+    //    argos::LOG<<"Cross Product: "<<stRobotData.CrossProduct<<std::endl;
+    //    argos::LOG<<"Waypoint_Counter: "<<stRobotData.WaypointCounter<<std::endl;
+    //    argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
     
-//    argos::LOG<<"Stack size: "<<stRobotData.WaypointStack.size()<<std::endl;
-    argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
-//    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
-    argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+//    argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
+//    argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
+//    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+//    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
+//    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
 //
-//    argos::LOG<<"Waypoint: "<<stRobotData.AddedPoint<<std::endl;
-    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
-    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
-//    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
-//////    argos::LOG<<"Target reached: "<<stRobotData.WaypointReached<<std::endl;
-    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
-    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
+//    
+//    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
+//    argos::LOG<<"Waypoint Flag Loop Functions: "<<loopFunctions->NewWayPointAdded<<std::endl;
+//
+//    argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
+//
+//    argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+//
+//
+//
+//    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
+//    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
+//    argos::LOG<<"Ticks For Safe Distance: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
+//    argos::LOG<<"Ticks Difference for intersection: "<<stRobotData.IntersectionTime<<std::endl;
+//    argos::LOG<<"Stop Turning Time: "<<stRobotData.StopTurningTime<<std::endl;
+//    argos::LOG<<"Velocity: "<<stRobotData.fLinearWheelSpeed<<std::endl;
+//
+//    
 //    argos::LOG<<"Collinear Flag: "<<stRobotData.CollinearFlag<<std::endl;
-//    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
 //
-//    argos::LOG<<"Robot Course Angle: "<<stRobotData.InitialOrientation<<std::endl;
-//    argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
-//    argos::LOG<<"Shortest Distance: "<<stRobotData.Priority<<std::endl;
-    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
-    argos::LOG<<"Waypoint Flag Loop Functions: "<<loopFunctions->NewWayPointAdded<<std::endl;
-//    argos::LOG<<"Waypoint_Counter: "<<stRobotData.WaypointCounter<<std::endl;
-//    argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
-    argos::LOG<<"Stop Turning Time: "<<stRobotData.StopTurningTime<<std::endl;
+//    argos::LOG<<"Dot Product: "<<stRobotData.Priority<<std::endl;
+//    argos::LOG<<"Waypoint: "<<stRobotData.AddedPoint<<std::endl;
+//    argos::LOG<<"Vector1: "<<stRobotData.vect1<<std::endl;
+//    argos::LOG<<"Vector2: "<<stRobotData.vect2<<std::endl;
+
     argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
     
     

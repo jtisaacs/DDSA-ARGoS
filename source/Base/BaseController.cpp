@@ -56,6 +56,10 @@ BaseController::BaseController() :
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
     stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
+    stRobotData.CrossProduct.Set(1,1,1);
+    stRobotData.vect1.Set(0,0);
+    stRobotData.vect2.Set(0,0);
+    stRobotData.IntersectionTime = 0;
 }
 
 
@@ -639,7 +643,7 @@ size_t BaseController::SimulationTick() {
 }
 
 size_t BaseController::SimulationTicksPerSecond() {
-     stRobotData.TicksPerSecond = LF.GetSimulator().GetPhysicsEngine("default").GetInverseSimulationClockTick();
+    
     return LF.GetSimulator().GetPhysicsEngine("default").GetInverseSimulationClockTick();
 }
 

@@ -182,6 +182,7 @@ void DSA_loop_functions::PreStep()
             BaseController::RobotData& sRobotDataprevious = cController.GetRobotData();
             BaseController::IntersectionData& sIntersectionDataprevious = cController.GetIntersectionData();
             
+            
             /* Get the hadndle to each next robot */
             for(CSpace::TMapPerType::iterator it1 = std::next(it, 1);
                 it1 != m_cFootbots.end();
@@ -200,6 +201,10 @@ void DSA_loop_functions::PreStep()
                 sRobotDataprevious.StartWaypoint = cController.GetPosition();
                 sRobotDatanext.StartWaypoint = cController1.GetPosition();
                 
+                // Reset the collinearity flag
+                sRobotDataprevious.CollinearFlag = false;
+                sRobotDatanext.CollinearFlag = false;
+                
                 /* check if robot's end waypoint is collinear in other robot's start and end waypoint */
                 CheckCollinearity(sRobotDataprevious, sRobotDatanext, sIntersectionDatanext);
                 
@@ -213,10 +218,10 @@ void DSA_loop_functions::PreStep()
                     cController1.SetStopMovement();
                     sRobotDatanext.WaypointStack.pop();
                     
-                    if(sRobotDatanext.StopTurningTime > 0)
-                    {
-                        sRobotDatanext.StopTurningTime = 0;
-                    }
+//                    if(sRobotDatanext.StopTurningTime > 0)
+//                    {
+//                        sRobotDatanext.StopTurningTime = 0;
+//                    }
                     
                 }
                 
@@ -285,62 +290,7 @@ void DSA_loop_functions::PreStep()
                     }
                     
                 }
-                
-                
-//                if(sRobotDataprevious.CollinearFlag !=1)
-//                {
-//                    /* find intersection between paths of robots */
-//                    GetPointAtSafeDistance(sRobotDataprevious);
-//                    Find_Intersection(sRobotDataprevious.StartWaypoint, PointChangeDirection,
-//                                      sRobotDatanext.StartWaypoint, sRobotDatanext.TargetWaypoint,sIntersectionDatanext);
-//                    if(sIntersectionDatanext.Intersection_flag == 1)
-//                    {
-//                        IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
-//                                                   sRobotDatanext,sIntersectionDatanext);
-//                        cController.SetHardStopMovement();
-//                        cController1.SetHardStopMovement();
-//                    }
-//                    else
-//                    {
-//                        Find_Intersection(PointChangeDirection, PointAtSafeDistance,
-//                                          sRobotDatanext.StartWaypoint, sRobotDatanext.TargetWaypoint,sIntersectionDatanext);
-//                        if(sIntersectionDatanext.Intersection_flag == 1)
-//                        {
-//                            IntersectionCollisionCheck(PointChangeDirection, sRobotDatanext.StartWaypoint,sRobotDataprevious,
-//                                                       sRobotDatanext,sIntersectionDatanext);
-//                            cController.SetStopMovement();
-//                            cController1.SetStopMovement();
-//                        }
-//                    }
-//
-//                    GetPointAtSafeDistance(sRobotDatanext);
-//                    Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
-//                                      sRobotDatanext.StartWaypoint, PointChangeDirection,sIntersectionDatanext);
-//                    if(sIntersectionDatanext.Intersection_flag == 1)
-//                    {
-//
-//                        IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, sRobotDatanext.StartWaypoint,sRobotDataprevious,
-//                                                   sRobotDatanext,sIntersectionDatanext);
-//                        cController.SetStopMovement();
-//                        cController1.SetStopMovement();
-//                    }
-//                    else
-//                    {
-//                        Find_Intersection(sRobotDataprevious.StartWaypoint, sRobotDataprevious.TargetWaypoint,
-//                                          PointChangeDirection, PointAtSafeDistance,sIntersectionDatanext);
-//
-//                        if(sIntersectionDatanext.Intersection_flag == 1)
-//                        {
-//
-//                            IntersectionCollisionCheck(sRobotDataprevious.StartWaypoint, PointChangeDirection,sRobotDataprevious,
-//                                                       sRobotDatanext,sIntersectionDatanext);
-//                            cController.SetStopMovement();
-//                            cController1.SetStopMovement();
-//                        }
-//                    }
-//                }// end of if(ptr.collinearflag!=1)
 
-//                }
             
             } /* end of inner for loop */
         } /* end of outer for loop */
@@ -1240,6 +1190,82 @@ void DSA_loop_functions::CalculateWaitTime(BaseController::RobotData& ptr1, Base
 //    ptr1.StopTurningTime = stoptime1;
 //    ptr2.StopTurningTime = stoptime2;
 }
+/*****************************************************************************************************************/
+/* Function to calculate angle between two vectors */
+/*****************************************************************************************************************/
+argos::Real DSA_loop_functions::CalculateAngleBetweenVectors(CVector3 v1, CVector3 v2)
+{
+    argos::Real DegreeAngle, v1length, v2length, dot_product;
+    
+    v1length = v1.Length();
+    v2length = v2.Length();
+    
+    dot_product = v1.DotProduct(v2);
+    // calculate the angle between vectors
+    // cos(angle) = (a.b/(|a|.|b|))
+    DegreeAngle = ToDegrees(ACos(Real(dot_product/(v1length * v2length)))).GetValue();
+    
+    return DegreeAngle;
+}
+
+/*****************************************************************************************************************/
+/* Function to represent vector when given two points */
+/*****************************************************************************************************************/
+argos::CVector3 DSA_loop_functions::GetVectorFromTwoPoints(argos::CVector2 StartPoint, argos::CVector2 EndPoint)
+{
+    argos::CVector3 v;
+    v.SetX((EndPoint.GetX() - StartPoint.GetX()));
+    v.SetY((EndPoint.GetY() - StartPoint.GetY()));
+    v.SetZ(0);
+    
+    return v;
+}
+
+/*************************************************************************************************************************/
+/* Function to find the shortest distance between two segments */
+/************************************************************************************************************************/
+argos:: Real DSA_loop_functions::ShortestDistTwoVectors(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2)
+{
+    argos::UInt8 i;
+    argos:: Real shortest_dist, min;
+    shortest_dist = 100;
+    min = 100;
+    i = 0;
+    
+    argos:: Real distance[4] = {0, 0, 0, 0};
+    /* In 2d the shortest of the distance between point A and line segment CD, B and CD, C and AB or D and AB.
+     So it's a fairly simple "distance between point and line" calculation (if the distances are all the same,
+     then the lines are parallel. */
+    
+    // dist between robot 1 start, goal and robot2 start
+    distance[0] = DistancePointSegment(ptr1.StartWaypoint, ptr1.TargetWaypoint, ptr2.StartWaypoint);
+    //    distance[0] = DistancePointSegment(ptr1.StartWaypoint, TargetPoint1, ptr2.StartWaypoint);
+    
+    // dist between robot 1 start, goal and robot2 goal
+    distance[1] = DistancePointSegment(ptr1.StartWaypoint, ptr1.TargetWaypoint, ptr2.TargetWaypoint);
+    //    distance[1] = DistancePointSegment(ptr1.StartWaypoint, TargetPoint1, TargetPoint2);
+    
+    // dist between robot 2 start, goal and robot1 start
+    distance[2] = DistancePointSegment(ptr2.StartWaypoint, ptr2.TargetWaypoint, ptr1.StartWaypoint);
+    //    distance[2] = DistancePointSegment(ptr2.StartWaypoint, TargetPoint2, ptr1.StartWaypoint);
+    
+    // dist between robot 2 start, goal and robot2 goal
+    distance[3] = DistancePointSegment(ptr2.StartWaypoint, ptr2.TargetWaypoint, ptr1.TargetWaypoint);
+    //    distance[3] = DistancePointSegment(ptr2.StartWaypoint, TargetPoint2, TargetPoint1);
+    
+    for(i = 0; i< 4; i++)
+    {
+        if(distance[i] < min)
+        {
+            min = distance[i];
+        }
+        shortest_dist = min;
+    }
+    
+    return shortest_dist;
+}
+
+
 
 /*****************************************************************************************************************/
 /* Function to check if robot start and target points are collinear */
@@ -1247,246 +1273,230 @@ void DSA_loop_functions::CalculateWaitTime(BaseController::RobotData& ptr1, Base
 void DSA_loop_functions::CheckCollinearity(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
                                            BaseController::IntersectionData &ptr3)
 {
+//    argos::CVector3 v1, v2, cross_product, AddedWaypoint, ZeroVector;
+//    argos::Real v1length, v2length, dot_product, DegreeAngle, shortest_dist, CosTheta;
+    argos::Real vec1length, vec2length,shortest_dist, CosTheta, dot_product;
+    argos::CVector2 vec1, vec2;
     
-    argos::CVector2 AddedWaypoint, TargetPoint1, TargetPoint2;
-    argos::Real Angle, Distance, distBetweenTargets, distBetweenStartPoints, dist1, dist2;
-    
-    ptr1.CollinearFlag = 0;
-    ptr2.CollinearFlag = 0;
-    ptr1.WaypointStackpopped = false;
-    ptr2.WaypointStackpopped = false;
-
-//    distBetweenTargets = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
-//    distBetweenStartPoints = CalculateDistance(ptr1.StartWaypoint, ptr2.StartWaypoint);
-//
-//    dist1 = CalculateDistance(ptr1.StartWaypoint, NestPosition);
-//    dist2 = CalculateDistance(ptr2.StartWaypoint, NestPosition);
-    
-    /* check if robot 1 start, target and robot 2 target points are collinear */
-//    Real Area_R1R2Goal =  ptr1.StartWaypoint.GetX() * (ptr2.TargetWaypoint.GetY() - ptr1.TargetWaypoint.GetY()) +
-//    ptr2.TargetWaypoint.GetX() * (ptr1.TargetWaypoint.GetY() - ptr1.StartWaypoint.GetY()) +
-//    ptr1.TargetWaypoint.GetX() * (ptr1.StartWaypoint.GetY() - ptr2.TargetWaypoint.GetY());
-//
-//
-//    /* check if robot 2 start, target and robot 1 target points are collinear */
-//    Real Area_R2R1Goal =  ptr1.TargetWaypoint.GetX() * (ptr2.StartWaypoint.GetY() - ptr2.TargetWaypoint.GetY()) +
-//    ptr2.StartWaypoint.GetX() * (ptr2.TargetWaypoint.GetY() - ptr1.TargetWaypoint.GetY()) +
-//    ptr2.TargetWaypoint.GetX() * (ptr1.TargetWaypoint.GetY() - ptr2.StartWaypoint.GetY());
+    argos::UInt16 timetowait;
     
     
     
-    if(ptr1.TargetWaypoint == NestPosition)
+    vec1.Set((ptr1.TargetWaypoint.GetX() - ptr1.StartWaypoint.GetX()), (ptr1.TargetWaypoint.GetY() - ptr1.StartWaypoint.GetY()));
+    vec2.Set((ptr2.TargetWaypoint.GetX() - ptr2.StartWaypoint.GetX()), (ptr2.TargetWaypoint.GetY() - ptr2.StartWaypoint.GetY()));
+   
+    vec1length = vec1.Length();
+    vec2length = vec2.Length();
+    
+    ptr1.vect1 = vec1;
+    ptr2.vect2 = vec2;
+    
+    dot_product = vec1.DotProduct(vec2);
+    
+    CosTheta = (dot_product/(vec1length * vec2length));
+    
+    // get the shortest distance between two vectors
+    shortest_dist = ShortestDistTwoVectors(ptr1, ptr2);
+    
+    ptr1.Priority = CosTheta;
+    ptr2.Priority = CosTheta;
+    // angle = 0 to 21 deg celsius or 180 to 158
+    if(abs(CosTheta) <= 1 and abs(CosTheta) >= 0.93)
     {
-        TargetPoint1 = CalculateTargePoint(ptr1);
-    }
-    else{
-        TargetPoint1 = ptr1.TargetWaypoint;
-    }
-    
-    if(ptr2.TargetWaypoint == NestPosition)
-    {
-        TargetPoint2 = CalculateTargePoint(ptr2);
-    }
-    else{
-        TargetPoint2 = ptr2.TargetWaypoint;
-    }
-    
-    
-    CheckRobotHeadingCourse(ptr1, ptr2, ptr3);
-    
-    if(ptr1.CollinearFlag!= 1)
-    {
-        if(ptr1.TargetWaypoint == NestPosition and ptr2.TargetWaypoint != NestPosition)
+        if(ptr1.GoingToOrFromNest == true and ptr2.GoingToOrFromNest == true)
         {
-            /* check if robot 2 target point is between robot 1 start and target point */
-            argos::Real distance_1 = CalculateDistance(ptr1.StartWaypoint, ptr2.TargetWaypoint);
-            argos::Real distance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
-            argos::Real distance_Total = CalculateDistance(ptr1.StartWaypoint, ptr1.TargetWaypoint);
-    
-//
-//            if(((distance_Total - 0.01) <= distance_1 + distance_2) and ((distance_Total + 0.01) >= distance_1 + distance_2))
-//            {
-            
-            // ptr 1 is  not in inner spiral. ptr2 is in inner spiral
-
-            if(((ptr1.StartWaypoint.GetX() > ptr2.StartWaypoint.GetX()) and
-               (ptr1.StartWaypoint.GetY() > ptr2.StartWaypoint.GetY())) or
-               (((distance_Total - 0.01) <= distance_1 + distance_2) and
-                ((distance_Total + 0.01) >= distance_1 + distance_2)))
+            if(shortest_dist <= Safedistance)
             {
-                /* check if robot 1 start, target and robot 2 target points are collinear */
-                Real Area_R1R2Goal =  ptr1.StartWaypoint.GetX() * (TargetPoint2.GetY() - TargetPoint1.GetY()) +
-                TargetPoint2.GetX() * (TargetPoint1.GetY() - ptr1.StartWaypoint.GetY()) +
-                TargetPoint1.GetX() * (ptr1.StartWaypoint.GetY() - TargetPoint2.GetY());
-
-                // add waypoint if target position of both robots and start point of robot 1 are collinear
-                if(0 <= abs(Area_R1R2Goal) and abs(Area_R1R2Goal) <= 0.1)
-                {
-                    AddNewWayPoint(ptr1, ptr2);
-                }
+                AddNewWayPoint(ptr1, ptr2);
             }
         }
-        else if(ptr2.TargetWaypoint == NestPosition and ptr1.TargetWaypoint != NestPosition)
-        {
-            /* check if robot 2 start, target and robot 1 target points are collinear */
-            Real Area_R2R1Goal =  TargetPoint1.GetX() * (ptr2.StartWaypoint.GetY() - TargetPoint2.GetY()) +
-            ptr2.StartWaypoint.GetX() * (TargetPoint2.GetY() - TargetPoint1.GetY()) +
-            TargetPoint2.GetX() * (TargetPoint1.GetY() - ptr2.StartWaypoint.GetY());
+    }
+//    ZeroVector.Set(0,0,0);
+//    cross_product.Set(0,0,0);
+//    dot_product = 0;
+    
+    // express the robot 1 and robot 2 paths as vector
+//    v1 = GetVectorFromTwoPoints(ptr1.StartWaypoint, ptr1.TargetWaypoint);
+//    v2 = GetVectorFromTwoPoints(ptr2.StartWaypoint, ptr2.TargetWaypoint);
+    
+    
+//    vec1.SetX((ptr1.TargetWaypoint.GetX() - ptr1.StartWaypoint.GetX()));
+//    vec1.SetY((ptr1.TargetWaypoint.GetY() - ptr1.StartWaypoint.GetY()));
+//
+//
+//    vec2.SetX((ptr2.TargetWaypoint.GetX() - ptr2.StartWaypoint.GetX()));
+//    vec2.SetY((ptr2.TargetWaypoint.GetY() - ptr2.StartWaypoint.GetY()));
+//
+//
+//
+//    v1length = vec1.Length();
+//    v2length = vec2.Length();
+//
+//    dot_product = vec1.DotProduct(vec2);
+//
+//    // calculate the angle between vectors
+//    // cos(angle) = (a.b/(|a|.|b|))
+//    DegreeAngle = ToDegrees(ACos(Real(dot_product/(v1length * v2length)))).GetValue();
+//
+//    // check if two vectors are collinear. 2 vectors are collinear if their cross product is zero vector (applies to 3d vectors)
+////    cross_product = v1.CrossProduct(v2);
+////
+////    ptr1.CrossProduct = cross_product;
+////    ptr2.CrossProduct = cross_product;
+////
+////    dot_product = vec1.DotProduct(vec2);
+////
+////    DegreeAngle = CalculateAngleBetweenVectors(v1, v2);
+//    timetowait = GetTicksToWait(Safedistance , MaxLinearSpeed);
+//
+//    // get the shortest distance between two robot courses
+//
+//    shortest_dist = ShortestDistTwoVectors(ptr1, ptr2);
+//
+//    ptr1.vect1 = vec1;
+//    ptr2.vect2 = vec2;
+//    ptr1.Priority = DegreeAngle;
+//    ptr2.Priority = DegreeAngle;
+    
+    // add way point if two vectors are collinear
+//    if(cross_product == ZeroVector)
+//    {
+//         if(ptr2.GoingToOrFromNest == true and ptr1.GoingToOrFromNest == true)
+//         {
+//             AddNewWayPoint(ptr1, ptr2);
+//         }
+//         else
+//         {
+//             if(ptr1.GoingToOrFromNest == true)
+//             {
+//                 ptr1.StopTurningTime+= timetowait;
+//             }
+//             else
+//             {
+//                 ptr2.StopTurningTime+= timetowait;
+//             }
+//         }
+//    }
+    // if the lines are almost parallel
+//    to know the angle between two vectors, I can use the dot product. This gives a value between -1 and 1, where
+//    1 means the vectors are parallel and facing the same direction (the angle is 0 degrees).
+//    -1 means they are parallel and facing opposite directions (still 180 degrees).
+//    0 means the angle between them is 90 degrees.
+    
+//    else if(0 <= DegreeAngle and OverlappingCourseAngle <= DegreeAngle)
+////    else if(abs(dot_product) <= 1 and abs(dot_product) >= 0.9)
+//    {
+//
+//        if(ptr1.GoingToOrFromNest == true and ptr2.GoingToOrFromNest == true)
+//        {
+//            if(shortest_dist <= Safedistance)
+//            {
+////                AddNewWayPoint(ptr1, ptr2);
+//            }
+//        }
+//    }
 
-            /* check if robot 1 target point is between robot 2 start and target point */
+
             
-            argos::Real ddistance_1 = CalculateDistance(ptr2.StartWaypoint, ptr1.TargetWaypoint);
-            argos::Real ddistance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
-            argos::Real ddistance_Total = CalculateDistance(ptr2.StartWaypoint, ptr2.TargetWaypoint);
-    
-    
-            if(((ddistance_Total- 0.01) <= ddistance_1 + ddistance_2) and ((ddistance_Total + 0.01) >= ddistance_1 + ddistance_2))
-            {
-                // add waypoint if target position of both robots and start point of robot 1 are collinear
-                if(0 <= abs(Area_R2R1Goal) and abs(Area_R2R1Goal) <= 0.1)
-                {
-                    AddNewWayPoint(ptr1, ptr2);
-                }
-            }
-        }
-//        else
-//        {
-//
-//            CheckRobotHeadingCourse(ptr1, ptr2, ptr3);
-//        }
-        //TODO
-//        else
-//        {
-//            if(ptr1.StopTurningTime > 0)
-//            {
-//                /* check if robot 2 start, target and robot 1 start points are collinear */
-//                Real Area_R2R1Goal1 =  ptr1.StartWaypoint.GetX() * (ptr2.StartWaypoint.GetY() - TargetPoint2.GetY()) +
-//                ptr2.StartWaypoint.GetX() * (TargetPoint2.GetY() - ptr1.StartWaypoint.GetY()) +
-//                TargetPoint2.GetX() * (ptr1.StartWaypoint.GetY() - ptr2.StartWaypoint.GetY());
-//
-//                /* check if robot 1 start point is between robot 2 start and target point */
-//
-//                argos::Real distance_1d = CalculateDistance(ptr2.StartWaypoint, ptr1.StartWaypoint);
-//                argos::Real distance_2d = CalculateDistance(ptr1.StartWaypoint, ptr2.TargetWaypoint);
-//                argos::Real distance_Totald = CalculateDistance(ptr2.StartWaypoint, ptr2.TargetWaypoint);
-//
-//
-//                if(((distance_Totald- 0.01) <= distance_1d + distance_2d) and ((distance_Totald + 0.01) >= distance_1d + distance_2d))
-//                {
-//                    // add waypoint if target position of both robots and start point of robot 1 are collinear
-//                    if(0 <= abs(Area_R2R1Goal1) and abs(Area_R2R1Goal1) <= 0.1)
-//                    {
-////                        AddNewWayPoint(ptr1, ptr2);
-//                    }
-//                }
-//            }
-//            else if(ptr2.StopTurningTime > 0)
-//            {
-//                /* check if robot 2 start point is between robot 1 start and target point */
-//                argos::Real ddistance_1d = CalculateDistance(ptr1.StartWaypoint, ptr2.StartWaypoint);
-//                argos::Real ddistance_2d = CalculateDistance(ptr1.TargetWaypoint, ptr2.StartWaypoint);
-//                argos::Real ddistance_Totald = CalculateDistance(ptr1.StartWaypoint, ptr1.TargetWaypoint);
-//
-//
-//
-//                if(((ddistance_Totald- 0.01) <= ddistance_1d + ddistance_2d) and ((ddistance_Totald + 0.01) >= ddistance_1d + ddistance_2d))
-//                {
-//                    /* check if robot 1 start, target and robot 2 start points are collinear */
-//                    Real Area_R1R2Goal2 =  ptr1.StartWaypoint.GetX() * (ptr2.StartWaypoint.GetY() - TargetPoint1.GetY()) +
-//                    ptr2.StartWaypoint.GetX() * (TargetPoint1.GetY() - ptr1.StartWaypoint.GetY()) +
-//                    TargetPoint1.GetX() * (ptr1.StartWaypoint.GetY() - ptr2.StartWaypoint.GetY());
-//
-//
-//                    // add waypoint if target position of both robots and start point of robot 1 are collinear
-//                    if(0 <= abs(Area_R1R2Goal2) and abs(Area_R1R2Goal2) <= 0.1)
-//                    {
-////                        AddNewWayPoint(ptr1, ptr2);
-//                    }
-//                }
-//            }
-//        }
-        
-
-     }
-//    else if(ptr1.TargetWaypoint == NestPosition and ptr2.TargetWaypoint == NestPosition)
-//    {
-//        distBetweenTargets = CalculateDistance(TargetPoint1, TargetPoint2);
-//        if(distBetweenTargets < Safedistance)
-//        {
-//            AddNewWayPoint(ptr1, ptr2);
-//        }
-//    }
-
-        //        distBetweenTargets = CalculateDistance(TargetPoint1, TargetPoint2);
-        //
-        //        if((ptr1.TargetWaypoint == NestPosition and distBetweenTargets < Safedistance) or
-        //           (ptr2.TargetWaypoint == NestPosition and distBetweenTargets < Safedistance))
-        //        {
-        //            AddNewWayPoint(ptr1, ptr2);
-        //        }
-
-//    if(0 <= abs(Area_R1R2Goal) and abs(Area_R1R2Goal) <= 0.1)
-//    {
-//
-//        /* check if robot 2 target point is between robot 1 start and target point */
-//
-//        argos::Real distance_1 = CalculateDistance(ptr1.StartWaypoint, ptr2.TargetWaypoint);
-//        argos::Real distance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
-//        argos::Real distance_Total = CalculateDistance(ptr1.StartWaypoint, ptr1.TargetWaypoint);
-//
-//
-//        if(((distance_Total - 0.01) <= distance_1 + distance_2) and ((distance_Total + 0.01) >= distance_1 + distance_2))
-//        {
-//            ptr1.CollinearFlag = 1;
-//            if(ptr1.id_robot < ptr2.id_robot)
-//            {
-//                ptr1.CollinearFlag = 1;
-//
-//                AddNewWayPoint(ptr1, ptr2);
-//
-//            }
-//            // add waypoint for 1st robot
-//            else{
-//
-//                CalculateWaitTime(ptr1, ptr2);
-//            }
-//
-//        }
-//
-//    }
-//
-//    else if(0 <= abs(Area_R2R1Goal) and abs(Area_R2R1Goal) <= 0.1)
-//    {
-//
-//        /* check if robot 1 target point is between robot 2 start and target point */
-//
-//        argos::Real ddistance_1 = CalculateDistance(ptr2.StartWaypoint, ptr1.TargetWaypoint);
-//        argos::Real ddistance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
-//        argos::Real ddistance_Total = CalculateDistance(ptr2.StartWaypoint, ptr2.TargetWaypoint);
-//
-//
-//        if(((ddistance_Total- 0.01) <= ddistance_1 + ddistance_2) and ((ddistance_Total + 0.01) >= ddistance_1 + ddistance_2))
-//        {
-//            ptr1.CollinearFlag = 1;
-//
-//            if(ptr1.id_robot < ptr2.id_robot)
-//            {
-//                ptr1.CollinearFlag = 1;
-//                AddNewWayPoint(ptr1, ptr2);
-//
-//            }
-//            // add waypoint for 1st robot
-//            else{
-//                 AddNewWayPoint(ptr1, ptr2);
-//
-//            }
-//
-//        }
-//    }
-
-    
-    
+            
 }
+
+//void DSA_loop_functions::CheckCollinearity(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+//                                           BaseController::IntersectionData &ptr3)
+//{
+//
+//    argos::CVector2 AddedWaypoint, TargetPoint1, TargetPoint2;
+//    argos::Real Angle, Distance, distBetweenTargets, distBetweenStartPoints, dist1, dist2;
+//
+//    ptr1.CollinearFlag = 0;
+//    ptr2.CollinearFlag = 0;
+//    ptr1.WaypointStackpopped = false;
+//    ptr2.WaypointStackpopped = false;
+//
+//
+//    if(ptr1.TargetWaypoint == NestPosition)
+//    {
+//        TargetPoint1 = CalculateTargePoint(ptr1);
+//    }
+//    else{
+//        TargetPoint1 = ptr1.TargetWaypoint;
+//    }
+//
+//    if(ptr2.TargetWaypoint == NestPosition)
+//    {
+//        TargetPoint2 = CalculateTargePoint(ptr2);
+//    }
+//    else{
+//        TargetPoint2 = ptr2.TargetWaypoint;
+//    }
+//
+//
+//    CheckRobotHeadingCourse(ptr1, ptr2, ptr3);
+//
+//    if(ptr1.CollinearFlag!= 1)
+//    {
+//        if(ptr1.TargetWaypoint == NestPosition and ptr2.TargetWaypoint != NestPosition)
+//        {
+//            /* check if robot 2 target point is between robot 1 start and target point */
+//            argos::Real distance_1 = CalculateDistance(ptr1.StartWaypoint, ptr2.TargetWaypoint);
+//            argos::Real distance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
+//            argos::Real distance_Total = CalculateDistance(ptr1.StartWaypoint, ptr1.TargetWaypoint);
+//
+////
+////            if(((distance_Total - 0.01) <= distance_1 + distance_2) and ((distance_Total + 0.01) >= distance_1 + distance_2))
+////            {
+//
+//            // ptr 1 is  not in inner spiral. ptr2 is in inner spiral
+//
+//            if(((ptr1.StartWaypoint.GetX() > ptr2.StartWaypoint.GetX()) and
+//               (ptr1.StartWaypoint.GetY() > ptr2.StartWaypoint.GetY())) or
+//               (((distance_Total - 0.01) <= distance_1 + distance_2) and
+//                ((distance_Total + 0.01) >= distance_1 + distance_2)))
+//            {
+//                /* check if robot 1 start, target and robot 2 target points are collinear */
+//                Real Area_R1R2Goal =  ptr1.StartWaypoint.GetX() * (TargetPoint2.GetY() - TargetPoint1.GetY()) +
+//                TargetPoint2.GetX() * (TargetPoint1.GetY() - ptr1.StartWaypoint.GetY()) +
+//                TargetPoint1.GetX() * (ptr1.StartWaypoint.GetY() - TargetPoint2.GetY());
+//
+//                // add waypoint if target position of both robots and start point of robot 1 are collinear
+//                if(0 <= abs(Area_R1R2Goal) and abs(Area_R1R2Goal) <= 0.1)
+//                {
+//                    AddNewWayPoint(ptr1, ptr2);
+//                }
+//            }
+//        }
+//        else if(ptr2.TargetWaypoint == NestPosition and ptr1.TargetWaypoint != NestPosition)
+//        {
+//            /* check if robot 2 start, target and robot 1 target points are collinear */
+//            Real Area_R2R1Goal =  TargetPoint1.GetX() * (ptr2.StartWaypoint.GetY() - TargetPoint2.GetY()) +
+//            ptr2.StartWaypoint.GetX() * (TargetPoint2.GetY() - TargetPoint1.GetY()) +
+//            TargetPoint2.GetX() * (TargetPoint1.GetY() - ptr2.StartWaypoint.GetY());
+//
+//            /* check if robot 1 target point is between robot 2 start and target point */
+//
+//            argos::Real ddistance_1 = CalculateDistance(ptr2.StartWaypoint, ptr1.TargetWaypoint);
+//            argos::Real ddistance_2 = CalculateDistance(ptr1.TargetWaypoint, ptr2.TargetWaypoint);
+//            argos::Real ddistance_Total = CalculateDistance(ptr2.StartWaypoint, ptr2.TargetWaypoint);
+//
+//
+//            if(((ddistance_Total- 0.01) <= ddistance_1 + ddistance_2) and ((ddistance_Total + 0.01) >= ddistance_1 + ddistance_2))
+//            {
+//                // add waypoint if target position of both robots and start point of robot 1 are collinear
+//                if(0 <= abs(Area_R2R1Goal) and abs(Area_R2R1Goal) <= 0.1)
+//                {
+//                    AddNewWayPoint(ptr1, ptr2);
+//                }
+//            }
+//        }
+////        else
+////        {
+////
+////            CheckRobotHeadingCourse(ptr1, ptr2, ptr3);
+////        }
+//
+//
+//
+//}
 
 
 /*************************************************************************************************************************************************************/
@@ -1696,24 +1706,6 @@ argos::CVector2 DSA_loop_functions::CalculateTargePoint(BaseController::RobotDat
 void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
 {
   
-    //                    if((previous_direction != 'A' and previous_direction != direction_last) or i == 3)
-    //                    {
-    //                        if(previous_point_set == 0)
-    //                        {
-    //                            Point1.Set(x, y);
-    //                            previous_point_set = 1;
-    //                        }
-    //                        else
-    //                        {
-    //                            Point2.Set(x, y);
-    //                            previous_point_set = 2;
-    //                            break;
-    //                        }
-    //                    }
-    //                    previous_direction = direction_last;
-    
-    
-    
     argos::Real x, y;
     argos::UInt8 i;
     char previous_direction;
@@ -1802,6 +1794,8 @@ void DSA_loop_functions::GetPointAtSafeDistance(BaseController::RobotData& ptr)
 
     }
     PointAtSafeDistance.Set(x, y);
+    ptr.IntersectionPt1 = PointChangeDirection;
+    ptr.IntersectionPt2 = PointAtSafeDistance;
 }
 
 /*****************************************************************************************************************/
@@ -1812,12 +1806,14 @@ void DSA_loop_functions::AddNewWayPoint(BaseController::RobotData& ptr1, BaseCon
     argos::CVector2 AddedWaypoint;
     argos::UInt16 TicksToWait_Robot1;
     argos::Real dist, x, y, radius, t1, t2;
-    argos::Real theta, DistanceToTarget_Robot1, DistRobot2NeedToTravel;
+    argos::Real  DistanceToTarget_Robot1, DistRobot2NeedToTravel;
     argos::CVector3 a, b, c;
     argos::CRadians headingAngleTowardsTarget;
-
+    argos::Real dist1, dist2;
+    argos::CRadians theta;
+    argos::CVector2 robot2_vector;
      // add some stop time to allow robot 2 turn and move to waypoint
-    ptr1.StopTurningTime += 10;
+//    ptr1.StopTurningTime += 10;
     
 //    if(ptr1.StartWaypoint.GetX() < ptr2.StartWaypoint.GetX())
 //    if((ptr1.StartWaypoint.GetX() > ptr2.StartWaypoint.GetX()) and
@@ -1867,24 +1863,29 @@ void DSA_loop_functions::AddNewWayPoint(BaseController::RobotData& ptr1, BaseCon
     if(c.GetZ() > 0)
     {
 //        theta = ToRadians(CDegrees(45.0f)).GetValue() - headingAngleTowardsTarget.GetValue();
-        theta = ToRadians(CDegrees(45.0f)).GetValue();
+//        theta = ToRadians(CDegrees(45.0f)).GetValue();
+        theta = ToRadians(CDegrees(45.0f));
         dist = CalculateDistance(ptr1.StartWaypoint, TargetPoint1);
 
     }
     else
     {
 //       theta = ToRadians(CDegrees(135.0f)).GetValue() + headingAngleTowardsTarget.GetValue();
-        theta = ToRadians(CDegrees(135.0f)).GetValue();
+//        theta = ToRadians(CDegrees(135.0f)).GetValue();
+        theta = ToRadians(CDegrees(135.0f));
         dist = CalculateDistance(ptr2.StartWaypoint, TargetPoint2);
     }
     
-    radius = (dist * sqrt(2))/2;
+//    radius = (dist * sqrt(2))/2;
+//
+//    x = ptr2.StartWaypoint.GetX() + cos(theta) * radius;
+//    y = ptr2.StartWaypoint.GetY() + sin(theta) * radius;
     
-    x = ptr2.StartWaypoint.GetX() + cos(theta) * radius;
-    y = ptr2.StartWaypoint.GetY() + sin(theta) * radius;
+//    AddedWaypoint.Set(x,y);
+    argos::CVector3 robot2vector3d = GetVectorFromTwoPoints(ptr2.StartWaypoint, TargetPoint2);
+    robot2_vector.Set(robot2vector3d.GetX(), robot2vector3d.GetY());
     
-    AddedWaypoint.Set(x,y);
-    
+    AddedWaypoint = robot2_vector.Rotate(theta);
     ptr2.AddedPoint = AddedWaypoint;
     
     if(ptr2.WaypointCounter <=10)
@@ -1901,9 +1902,31 @@ void DSA_loop_functions::AddNewWayPoint(BaseController::RobotData& ptr1, BaseCon
 //        ptr2.Waypoint_Added = true;
         ptr2.WaypointCounter++;
         
+        dist1 = CalculateDistance(ptr1.StartWaypoint, ptr1.TargetWaypoint);
+        dist2 = CalculateDistance(ptr2.StartWaypoint, ptr2.TargetWaypoint);
+        
+        // check if robot2 is in inner spiral than that of robot1
+        if(dist1 >= dist2)
+        {
+            // check if robot 2 is stopped
+            if(ptr2.StopTurningTime > 0)
+            {
+                ptr1.StopTurningTime += ptr2.StopTurningTime + 10;
+            }
+            else
+            {
+                ptr1.StopTurningTime += 10;
+            }
+        }
+        // robot 2 is in the outer spiral than that of robot 1
+        else
+        {
+            ptr1.StopTurningTime += 10;
+        }
+
+        
     }
-    
-    
+
 }
 
 /****************************************************************************************************************/
@@ -1992,11 +2015,6 @@ void DSA_loop_functions::Find_Intersection(CVector2 pt1, CVector2 pt2, CVector2 
 }
 
 
-
-
-
-
-
 /**************************************************************************************************************************/
 /* Function to calculate time required by robot to reach intersection point */
 /**************************************************************************************************************************/
@@ -2030,13 +2048,13 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
 //            argos::Real AngleRobotCourse = ToDegrees(angle_readians).GetValue();
 //
 //            AngleRobotCourse  = abs(AngleRobotCourse);
-          
+
 //            TimeToTurn_2 = GetTimeToTurn(AngleRobotCourse, ptr2.fBaseAngularWheelSpeed);
             TimeToTurn_2 = 2*GetTimeToTurn(90, ptr2.fBaseAngularWheelSpeed);
         }
         else
         {
-            
+
             TimeToTurn_2 = 0;
         }
     }
@@ -2059,15 +2077,15 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
 
 
     TicksToWait_Robot2 = GetTicksToWait(DistanceToIntersection_Robot2, ptr2.fLinearWheelSpeed) + ptr2.StopTurningTime + TimeToTurn_2;
-    
+
     TimeDiff = abs(TicksToWait_Robot1 - TicksToWait_Robot2);
-    
+
     TicksToWaitforSafedistance = (GetTicksToWait(Safedistance , MaxLinearSpeed) + GetTimeToTurn(180, ptr1.fBaseAngularWheelSpeed)) + 10;
-    
+
     ptr1.Intial_TurningWaitTime = TicksToWait_Robot1;
     ptr2.Intial_TurningWaitTime = TicksToWait_Robot2;
-    ptr1.Priority = TicksToWaitforSafedistance;
-    ptr2.Priority = TicksToWaitforSafedistance;
+//    ptr1.Priority = TicksToWaitforSafedistance;
+//    ptr2.Priority = TicksToWaitforSafedistance;
 
     //if the difference between the times is equal to safe distance time between two robots
     if(TimeDiff <= TicksToWaitforSafedistance)
@@ -2075,7 +2093,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
 
         /* there is a chance of collision */
         /* slow down the velocity of robot 2 as its priority is lower */
-        
+
 //        if((ptr1.GoingToOrFromNest == true &&
 //           (DistanceToIntersection_Robot1 < DistanceToIntersection_Robot2)) or
 //            ptr1.WaypointStackpopped == true)
@@ -2085,7 +2103,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
             IntersectionDistance = DistanceToIntersection_Robot1;
             TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
             AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
-            
+
             if(AdjustedVelocity < MinLinearSpeed)
             {
                 AdjustedVelocity = MaxLinearSpeed;
@@ -2097,7 +2115,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
                 ptr2.StopTurningTime += ((TimeToIntersection));
 //                ptr2.StopTurningTime += (stop_time);
             }
-            
+
             ptr2.fLinearWheelSpeed = AdjustedVelocity;
 
         }
@@ -2135,8 +2153,8 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
                     ptr2.StopTurningTime += ((TimeToIntersection));
                 }
                 ptr2.fLinearWheelSpeed = AdjustedVelocity;
-                
-            
+
+
             }
             else if((DistanceToIntersection_Robot2 < DistanceToIntersection_Robot2) and ptr2.GoingToOrFromNest == false)
             {
@@ -2149,11 +2167,11 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
                     ptr1.StopTurningTime += ((TimeToIntersection));
                 }
                 ptr1.fLinearWheelSpeed = AdjustedVelocity;
-                
+
             }
             else
             {
-                
+
                 IntersectionDistance = DistanceToIntersection_Robot1;
                 TimeToIntersection = TicksToWaitforSafedistance;
                 AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
@@ -2163,84 +2181,10 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
                     ptr2.StopTurningTime += ((TimeToIntersection));
                 }
                 ptr2.fLinearWheelSpeed = AdjustedVelocity;
-                
+
             }
         }
-        
-        
 
-//        else
-//        {
-//            if(DistanceToIntersection_Robot1 < DistanceToIntersection_Robot2)
-//            {
-//                IntersectionDistance = DistanceToIntersection_Robot2;
-//                TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
-//                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
-//
-//                if(AdjustedVelocity < MinLinearSpeed)
-//                {
-////                    AdjustedVelocity = MinLinearSpeed;
-//                    Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-//                    Real stop_time = abs(Time - TimeToIntersection);
-//    //                ptr2.StopTurningTime += 200;
-//                    ptr2.StopTurningTime += (stop_time + time_turn_safe_dist);
-//                }
-//                ptr2.fLinearWheelSpeed = AdjustedVelocity;
-//                ptr2.Intersection_Adjustment = 1;
-//
-//            }
-//            /* slow down the velocity of robot 1 as its priority is lower */
-//            else if(DistanceToIntersection_Robot2 < DistanceToIntersection_Robot1)
-//            {
-//                IntersectionDistance = DistanceToIntersection_Robot1;
-//                TimeToIntersection = TicksToWait_Robot2 + TicksToWaitforSafedistance;
-//                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
-//                if(AdjustedVelocity < MinLinearSpeed)
-//                {
-////                    AdjustedVelocity = MinLinearSpeed;
-//                    Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-//                    Real stop_time = abs(Time - TimeToIntersection);
-//    //                ptr1.StopTurningTime += 200;
-//                    ptr1.StopTurningTime += (stop_time + time_turn_safe_dist);
-//                }
-//                ptr1.fLinearWheelSpeed = AdjustedVelocity;
-//    //            ptr1.Intersection_Adjustment = 1;
-//            }
-//            else{
-//                if(ptr1.GoingToNest)
-//                {
-//                    IntersectionDistance = DistanceToIntersection_Robot2;
-//                    TimeToIntersection = TicksToWait_Robot1 + TicksToWaitforSafedistance;
-//                    AdjustedVelocity = (IntersectionDistance/ TimeToIntersection) * SimulatorTicksperSec;
-//
-//                    if(AdjustedVelocity < MinLinearSpeed)
-//                    {
-////                        AdjustedVelocity = MinLinearSpeed;
-//                        Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-//                        Real stop_time = abs(Time - TimeToIntersection);
-//    //                    ptr2.StopTurningTime += 200;
-//                        ptr2.StopTurningTime += (stop_time + time_turn_safe_dist);
-//                    }
-//                    ptr2.fLinearWheelSpeed = AdjustedVelocity;
-//    //                ptr2.Intersection_Adjustment = 1;
-//                }
-//                else{
-//                    IntersectionDistance = DistanceToIntersection_Robot1;
-//                    TimeToIntersection = TicksToWait_Robot2 + TicksToWaitforSafedistance;
-//                    AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
-//                    if(AdjustedVelocity < MinLinearSpeed)
-//                    {
-////                        AdjustedVelocity = MinLinearSpeed;
-//                        Real Time = GetTicksToWait(IntersectionDistance , MinLinearSpeed);
-//                        Real stop_time = abs(Time - TimeToIntersection);
-//    //                    ptr1.StopTurningTime += 200;
-//                        ptr1.StopTurningTime += (stop_time + time_turn_safe_dist);
-//                    }
-//                    ptr1.fLinearWheelSpeed = AdjustedVelocity;
-//    //                ptr1.Intersection_Adjustment = 1;
-//                }
-//            }
-//        }
 
     }
 
@@ -2249,6 +2193,163 @@ void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
 
 }
 
+//void DSA_loop_functions::IntersectionCollisionCheck(CVector2 pt1, CVector2 pt2,
+//                                                    BaseController::RobotData& ptr1, BaseController::RobotData &ptr2,
+//                                                    BaseController::IntersectionData &ptr3, argos::UInt8 index)
+//{
+//    argos::Real intersectiondist1, intersectiondist2, TurningAngle, IntersectionDistance, vec1length, vec2length;
+//    argos::UInt16 IntersectionTime1, IntersectionTime2, TicksToWaitforSafedistance, TimeToIntersection, timetoturn1, timetoturn2;
+//    argos::CVector2 v1, v2;
+//    argos::Real AdjustedVelocity, Velocity, angle_robo1, angle_robo2;
+//
+//    IntersectionTime1 = 0;
+//    IntersectionTime2 = 0;
+//    intersectiondist1 = 0;
+//    intersectiondist2 = 0;
+//    // get the lowest velocity, to get accurate time to get a safe distance between robots
+//    if(ptr1.fLinearWheelSpeed < ptr2.fLinearWheelSpeed)
+//    {
+//        Velocity = ptr1.fLinearWheelSpeed;
+//    }
+//    else
+//    {
+//        Velocity = ptr2.fLinearWheelSpeed;
+//    }
+//    // get the turning time for each robot:
+//    angle_robo1 = ToDegrees((ptr1.TargetWaypoint - ptr1.StartWaypoint).Angle()).GetValue();
+//    angle_robo2 = ToDegrees((ptr2.TargetWaypoint - ptr2.StartWaypoint).Angle()).GetValue();
+//
+//    // Get tutning time for each robot to go to the target location
+//    timetoturn1 = GetTimeToTurn(angle_robo1, ptr1.fLinearWheelSpeed);
+//    timetoturn2 = GetTimeToTurn(angle_robo2, ptr2.fLinearWheelSpeed);
+//
+//    // ticks to wait while robots are at safe distance from each other (add turning time, if robot needs to change direction for buffer)
+//    TicksToWaitforSafedistance = GetTicksToWait(Safedistance, Velocity) + GetTimeToTurn(90, Velocity);
+//
+//
+//    // if the intersection point is found before the robot changes direction
+//    // intersection distance is equal to distance to intersection point - diameter of robot to accumulate error for collision avoidance
+//    if(index == 1)
+//    {
+//
+//        intersectiondist1 = CalculateDistance(pt1, ptr3.IntersectionPoint);
+//        intersectiondist2 = CalculateDistance(pt2, ptr3.IntersectionPoint);
+//
+//        IntersectionTime1 = GetTicksToWait(intersectiondist1, ptr1.fLinearWheelSpeed) + ptr1.StopTurningTime + timetoturn1;
+//        IntersectionTime2 = GetTicksToWait(intersectiondist2, ptr2.fLinearWheelSpeed) + ptr2.StopTurningTime + timetoturn2;
+//    }
+//    // get the time to intersection where robot changes the direction
+//    else
+//    {
+//        intersectiondist1 = CalculateDistance(pt1, ptr3.IntersectionPoint);
+//        intersectiondist2 = CalculateDistance(ptr2.StartWaypoint, pt2) + CalculateDistance(pt2, ptr3.IntersectionPoint);
+//
+//        //calculate the vectors when robot changes the direction
+//        v1.Set((PointChangeDirection.GetX() - ptr2.StartWaypoint.GetX()), (PointChangeDirection.GetY() - ptr2.StartWaypoint.GetY()));
+//        v2.Set((PointAtSafeDistance.GetX() - PointChangeDirection.GetX()), (PointAtSafeDistance.GetY() - PointChangeDirection.GetY()));
+//
+//        vec1length = v1.Length();
+//        vec2length = v2.Length();
+//
+//        argos::Real dot_product = v1.DotProduct(v2);
+//
+//        argos::CRadians Theta = ACos((dot_product/(vec1length * vec2length)));
+//        TurningAngle = ToDegrees(Theta).GetValue();
+//
+//
+//        IntersectionTime1 = GetTicksToWait(intersectiondist1, ptr1.fLinearWheelSpeed) + ptr1.StopTurningTime + timetoturn1;
+//        IntersectionTime2 = GetTicksToWait(intersectiondist2, ptr2.fLinearWheelSpeed) +
+//                            GetTimeToTurn(TurningAngle, ptr2.fBaseAngularWheelSpeed)+ ptr2.StopTurningTime + timetoturn2;
+//    }
+//
+//    ptr1.Intial_TurningWaitTime = TicksToWaitforSafedistance;
+//    ptr2.Intial_TurningWaitTime = TicksToWaitforSafedistance;
+//
+//    ptr1.IntersectionTime = IntersectionTime1;
+//    ptr2.IntersectionTime = IntersectionTime2;
+//
+//    // if both the robots reach the intersection point in the same time, then there is a chance of collision
+//    if(abs(IntersectionTime1 - IntersectionTime2) <= (TicksToWaitforSafedistance + 10))
+//    {
+//
+//        // if distance to intersection point of robot1 is less than that of robot2 and time to reach the
+//        // intersection pt for robot 1 is less than that of robot 2
+//        if((intersectiondist1 < intersectiondist2) and (IntersectionTime1 < IntersectionTime2))
+//        {
+//
+//            IntersectionDistance = intersectiondist1;
+//            TimeToIntersection = IntersectionTime1 + TicksToWaitforSafedistance;
+//            AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//
+//            if(AdjustedVelocity < MinLinearSpeed)
+//            {
+//                AdjustedVelocity = ptr2.fLinearWheelSpeed;
+//                ptr2.StopTurningTime += (2 * (TimeToIntersection + 10));
+//
+//            }
+//
+//            ptr2.fLinearWheelSpeed = AdjustedVelocity;
+//        }
+//        // if distance to intersection point of robot2 is less than that of robot1 and time to reach the
+//        // intersection pt for robot 2 is less than that of robot 1
+//        else if((intersectiondist2 < intersectiondist1) and (IntersectionTime2 < IntersectionTime1))
+//        {
+//            IntersectionDistance = intersectiondist2;
+//            TimeToIntersection = IntersectionTime2 + TicksToWaitforSafedistance;
+//            AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//
+//            if(AdjustedVelocity < MinLinearSpeed)
+//            {
+//                AdjustedVelocity = ptr1.fLinearWheelSpeed;
+//                ptr1.StopTurningTime += (2*(TimeToIntersection + 10));
+//
+//            }
+//
+//            ptr1.fLinearWheelSpeed = AdjustedVelocity;
+//        }
+//        // if distance and time criteria are not satisfied
+//        else
+//        {
+//            // time to reach the intersection for robot 1 is greater than robot2, adjust velocity and time for robot1
+//            if(IntersectionTime1 < IntersectionTime2)
+//            {
+//                IntersectionDistance = intersectiondist2;
+//                TimeToIntersection = IntersectionTime2 + TicksToWaitforSafedistance;
+//                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//
+//                if(AdjustedVelocity < MinLinearSpeed)
+//                {
+//                    AdjustedVelocity = ptr1.fLinearWheelSpeed;
+//                    ptr1.StopTurningTime += (2*(TimeToIntersection + 10));
+//
+//                }
+//
+//                ptr1.fLinearWheelSpeed = AdjustedVelocity;
+//            }
+//            // time to reach the intersection for robot 2 is greater than robot1, adjust velocity and time for robot2
+//            else
+//            {
+//                IntersectionDistance = intersectiondist1;
+//                TimeToIntersection = IntersectionTime1 + TicksToWaitforSafedistance;
+//                AdjustedVelocity = (IntersectionDistance/TimeToIntersection) * SimulatorTicksperSec;
+//
+//                if(AdjustedVelocity < MinLinearSpeed)
+//                {
+//                    AdjustedVelocity = ptr2.fLinearWheelSpeed;
+//                    ptr2.StopTurningTime += (2*(TimeToIntersection + 10));
+//
+//                }
+//
+//                ptr2.fLinearWheelSpeed = AdjustedVelocity;
+//            }
+//        }// end of outer else
+//    } // end of outer if
+//
+//    /* Reset the flag */
+//    ptr3.Intersection_flag = 0;
+//
+//}
+//
 
 
 

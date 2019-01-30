@@ -92,6 +92,7 @@ class DSA_controller : public BaseController {
 
 	string results_path;
 	string results_full_path;
+    size_t CircuitNumber = 1;
 };
 
 #endif /* DSA_CONTROLLER_H */

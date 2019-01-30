@@ -32,7 +32,7 @@ DSA_loop_functions::DSA_loop_functions() :
     ticks_per_second(0),
     sim_time(0),
     score(0),
-    PrintFinalScore(0),
+    PrintFinalScore(1),
     SimulatorTicksperSec(0),
     m_pcRNG(NULL)
 {}
@@ -48,6 +48,10 @@ CSimulator     *simulator     = &GetSimulator();
  argos::GetNodeAttribute(DDSA_node, "NestRadius",                 NestRadius);
  argos::GetNodeAttribute(DDSA_node, "FoodBoundsWidth",                 FoodBoundsWidth);
  argos::GetNodeAttribute(DDSA_node, "FoodBoundsHeight",                 FoodBoundsHeight);
+ argos::GetNodeAttribute(DDSA_node, "RobotNum",      RobotNumber);
+ argos::GetNodeAttribute(DDSA_node, "ResultsPath",      file_path);
+
+    
 
  NestRadiusSquared = NestRadius*NestRadius;
 
@@ -86,7 +90,30 @@ CSimulator     *simulator     = &GetSimulator();
     stoptime2 = 0;
     RobotReachedWayPoint = 0;
     FirstCheck = 0;
+    
     Result_Checked = 1;
+    // Name the results file with the current time and date
+    time_t t = time(0);   // get time now
+    struct tm * now = localtime( & t );
+    stringstream ss;
+    
+    ss << "DSA-"<<GIT_BRANCH<<"-"<<GIT_COMMIT_HASH<<"-"
+    << (now->tm_year) << '-'
+    << (now->tm_mon + 1) << '-'
+    <<  now->tm_mday << '-'
+    <<  now->tm_hour << '-'
+    <<  now->tm_min << '-'
+    <<  now->tm_sec << ".csv";
+    
+    file_name = ss.str();
+    full_path = file_path+"/"+file_name;
+    
+    ofstream results_output_stream;
+    results_output_stream.open(full_path, ios::app);
+    results_output_stream << "Number_Of_Robots, "<<"Simulator_Clock, "
+    << "Number_Of_Targets"<< endl;
+    results_output_stream.close();
+    
 }
 
 
@@ -99,7 +126,16 @@ double DSA_loop_functions::Score()
 void DSA_loop_functions::setScore(double s)
 {
   score = s;
-  if (score >= FoodItemCount) 
+
+
+//ofstream results_output_stream;
+//results_output_stream.open(full_path, ios::app);
+//results_output_stream<< RobotNumber << ", "
+//<< getSimTimeInSeconds() << ", "
+//<< score << endl;
+//results_output_stream.close();
+    
+  if (score >= FoodItemCount)
     {
       PostExperiment();
       exit(0);
@@ -109,6 +145,14 @@ void DSA_loop_functions::setScore(double s)
 void DSA_loop_functions::PostExperiment() 
 {
   if (PrintFinalScore == 1) printf("%f, %f\n", getSimTimeInSeconds(), score);
+    
+   
+    ofstream results_output_stream;
+    results_output_stream.open(full_path, ios::app);
+    results_output_stream<< RobotNumber << ", "
+    << getSimTimeInSeconds() << ", "
+    << score << endl;
+    results_output_stream.close();
 }
 
 
@@ -127,7 +171,6 @@ void DSA_loop_functions::PreStep()
     
     //Reset the Result_Checked variable
     Result_Checked = 1;
-    
     
     /* Get the hadndle to each robot and check if any one waypoint reached*/
     for(CSpace::TMapPerType::iterator it2 = m_cFootbots.begin();
@@ -167,6 +210,7 @@ void DSA_loop_functions::PreStep()
             
             cController4.SetHardStopMovement();
             cController4.ResetIntersectionData();
+            cController4.SetMovement();
         }
         
         /* Get the hadndle to each robot */

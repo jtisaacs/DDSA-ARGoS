@@ -55,51 +55,49 @@ void DSA_controller::Init(TConfigurationNode& node) {
     TrailColor = CColor(std::rand()%255, std::rand()%255, std::rand()%255, 255);
 
     // Name the results file with the current time and date
- time_t t = time(0);   // get time now
-    struct tm * now = localtime( & t );
-    stringstream ss;
-
-    ss << "DSA-"<<GIT_BRANCH<<"-"<<GIT_COMMIT_HASH<<"-" 
-       << (now->tm_year) << '-'
-       << (now->tm_mon + 1) << '-'
-       <<  now->tm_mday << '-'
-       <<  now->tm_hour << '-'
-       <<  now->tm_min << '-'
-       <<  now->tm_sec << ".csv";
-
-    string results_file_name = ss.str();
-   results_full_path = results_path+"/"+results_file_name;        
-
-
-
+// time_t t = time(0);   // get time now
+//    struct tm * now = localtime( & t );
+//    stringstream ss;
+//
+//    ss << "DSA-"<<GIT_BRANCH<<"-"<<GIT_COMMIT_HASH<<"-"
+//       << (now->tm_year) << '-'
+//       << (now->tm_mon + 1) << '-'
+//       <<  now->tm_mday << '-'
+//       <<  now->tm_hour << '-'
+//       <<  now->tm_min << '-'
+//       <<  now->tm_sec << ".csv";
+//
+//   string results_file_name = ss.str();
+//   results_full_path = results_path+"/"+results_file_name;
+   
     // Only the first robot should do this:
 
 
-    if (GetId().compare("DSA_0") == 0)
-      {
+//    if (GetId().compare("DSA_0") == 0)
+//      {
   
-   ofstream results_output_stream;
- results_output_stream.open(results_full_path, ios::app);
- results_output_stream << "NumberOfRobots, "
-		       << "NumberOfSpirals, "
-		       << "TargetDistanceTolerance, "
-		       << "TargetAngleTolerance, "
-		       << "SearcherGap, "
-		       << "FoodDistanceTolerance, "
-		       << "RobotForwardSpeed, "
-		       << "RobotRotationSpeed, "
-		       << "RandomSeed" << endl
-               << NumberOfRobots << ", "
-		       << NumberOfSpirals << ", "
-		       << TargetDistanceTolerance << ", "
-		       << TargetAngleTolerance << ", "
-		       << SearcherGap << ", "
-		       << FoodDistanceTolerance << ", "
-		       << RobotForwardSpeed << ", "
-		       << RobotRotationSpeed << ", "
-		       << CSimulator::GetInstance().GetRandomSeed() << endl;  
- results_output_stream.close();
-      }
+//   ofstream results_output_stream;
+// results_output_stream.open(results_full_path, ios::app);
+// results_output_stream << "NumberOfRobots, "
+//               << "NumberOfSpirals, "
+//               << "TargetDistanceTolerance, "
+//               << "TargetAngleTolerance, "
+//               << "SearcherGap, "
+//               << "FoodDistanceTolerance, "
+//               << "RobotForwardSpeed, "
+//               << "RobotRotationSpeed, "
+//               << "RandomSeed" << endl
+//               << NumberOfRobots << ", "
+//               << NumberOfSpirals << ", "
+//               << TargetDistanceTolerance << ", "
+//               << TargetAngleTolerance << ", "
+//               << SearcherGap << ", "
+//               << FoodDistanceTolerance << ", "
+//               << RobotForwardSpeed << ", "
+//               << RobotRotationSpeed << ", "
+//               << CSimulator::GetInstance().GetRandomSeed() << endl;
+// results_output_stream.close();
+//      }
 
     std::string id = GetId();
     std::string extracted_str = extractID(id);
@@ -109,6 +107,7 @@ void DSA_controller::Init(TConfigurationNode& node) {
     }
     
     FirstTimeSearch = 0;
+//    loopFunctions->file_path = results_full_path;
 //    ResumeMovemnet = 0;
     cout << "Finished Initializing the DDSA" << endl;
 }
@@ -153,7 +152,7 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('N');
                 ith_robot_path += 'N';
-                if((i_robot-1) == RobotNumber && i_circuit < 1)
+                if((i_robot-1) == RobotNumber && i_circuit < CircuitNumber)
                 {
                     StepsToActivateAlgorithm++;
                 }
@@ -164,7 +163,7 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('E');
                 ith_robot_path += 'E';
-                if(i_robot == RobotNumber && i_circuit < 1)
+                if(i_robot == RobotNumber && i_circuit < CircuitNumber)
                 {
                     StepsToActivateAlgorithm++;
                 }
@@ -175,7 +174,7 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('S');
                 ith_robot_path += 'S';
-                if((i_robot - 1) == RobotNumber && i_circuit < 1)
+                if((i_robot - 1) == RobotNumber && i_circuit < CircuitNumber)
                 {
                     StepsToActivateAlgorithm++;
                 }
@@ -186,7 +185,7 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
             {
                 //ith_robot_path.push_back('W');
                 ith_robot_path += 'W';
-                if((i_robot-1) == RobotNumber && i_circuit < 1)
+                if((i_robot-1) == RobotNumber && i_circuit < CircuitNumber)
                 {
                     StepsToActivateAlgorithm++;
                 }
@@ -196,7 +195,7 @@ size_t DSA_controller::generatePattern(int N_circuits, int N_robots)
 
         paths.push_back(ith_robot_path);
         ith_robot_path.clear();
-        StepsToActivateAlgorithm = 0;
+//        StepsToActivateAlgorithm = 0;
     }
 
     //pattern = ith_robot_path;
@@ -287,32 +286,33 @@ void DSA_controller::CopyPatterntoTemp()
  *****/
 void DSA_controller::ControlStep() 
 {
-    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
-    argos::LOG<<"Ticks: "<<loopFunctions->sim_time<<std::endl;
     
-
-//    argos::LOG<<"Robot ID: "<<RobotNumber<<std::endl;
-    
-//    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
-
-//    argos::LOG<<"Robot ID inter: "<<stRobotData.Priority<<std::endl;
- 
-//    argos::LOG<<"Safe distanace Ticks: "<<stRobotData.WaypointCounter<<std::endl;
-//    argos::LOG<<"Simulator TicksPerSec: "<<loopFunctions->SimulatorTicksperSec<<std::endl;
-    
-//    argos::LOG<<"Holding food flag: "<< IsHoldingFood()<<std::endl;
-
-//    argos::LOG<<"Return Position: "<<ReturnPosition<<std::endl;
+//    argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
+//    argos::LOG<<"Target collected: "<<num_targets_collected<<std::endl;
+//    argos::LOG<<"Ticks: "<<loopFunctions->sim_time<<std::endl;
+//    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+//    argos::LOG<<"First Time Search: "<<FirstTimeSearch<<std::endl;
+//
+//    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
+//    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
+//    argos::LOG<<"NewWaypointAdded: "<<loopFunctions->NewWayPointAdded<<std::endl;
+//    argos::LOG<<"StopMovement Flag: "<< stRobotData.StopMovement<<std::endl;
+//
 //    argos::LOG<<"DSA State: "<<DSA<<std::endl;
-////    argos::LOG<<"movemnt state: "<<CurrentMovementState<<std::endl;
+//
 //    argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
 //    argos::LOG<<"Steps To Activate Algorithm: "<<StepsToActivateAlgorithm<<std::endl;
-   
+//    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
+//    argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
+//    
+    
+    
 //     argos::LOG<<"Algorithm Checked: "<<stRobotData.Checked<<std::endl;
     //    argos::LOG<<"Point Change Direction: "<<loopFunctions->PointChangeDirection<<std::endl;
     //    argos::LOG<<"Point Safe Distance: "<<loopFunctions->PointAtSafeDistance<<std::endl;
     
-    //    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
+    
+    ////    argos::LOG<<"movemnt state: "<<CurrentMovementState<<std::endl;
     //    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
     //    argos::LOG<<"Waypoint added: "<<stRobotData.Waypoint_Added<<std::endl;
     //////    argos::LOG<<"Target reached: "<<stRobotData.WaypointReached<<std::endl;
@@ -327,13 +327,22 @@ void DSA_controller::ControlStep()
     //    argos::LOG<<"Robot Heading Angle: "<<stRobotData.HeadingAngle<<std::endl;
     //    argos::LOG<<"Cross Product: "<<stRobotData.CrossProduct<<std::endl;
     //    argos::LOG<<"Waypoint_Counter: "<<stRobotData.WaypointCounter<<std::endl;
-    //    argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
+//        argos::LOG<<"Linear Speed: "<<stRobotData.fLinearWheelSpeed<<std::endl;
     
 //    argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
 //    argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
-//    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
-//    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
-//    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
+  
+   
+    //    argos::LOG<<"Distance: "<<stRobotData.Priority<<std::endl;
+    
+    //    argos::LOG<<"Robot ID inter: "<<stRobotData.Priority<<std::endl;
+    
+    //    argos::LOG<<"Safe distanace Ticks: "<<stRobotData.WaypointCounter<<std::endl;
+    //    argos::LOG<<"Simulator TicksPerSec: "<<loopFunctions->SimulatorTicksperSec<<std::endl;
+    
+    //    argos::LOG<<"Holding food flag: "<< IsHoldingFood()<<std::endl;
+    
+    //    argos::LOG<<"Return Position: "<<ReturnPosition<<std::endl;
 //
 //    
 //    argos::LOG<<"Waypoint_Added Flag: "<<stRobotData.Waypoint_Added<<std::endl;
@@ -360,7 +369,7 @@ void DSA_controller::ControlStep()
 //    argos::LOG<<"Vector1: "<<stRobotData.vect1<<std::endl;
 //    argos::LOG<<"Vector2: "<<stRobotData.vect2<<std::endl;
 
-    argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
+    
     
     
     // To draw paths
@@ -461,7 +470,8 @@ void DSA_controller::ControlStep()
               stRobotData.Waypoint_Added = true;
               SetTarget(ReturnPosition);
               stRobotData.pathcheck = false;
-              if(stRobotData.GoingToOrFromNest == true)
+//              if(stRobotData.GoingToOrFromNest == true and loopFunctions->FirstCheck == true)
+              if(stRobotData.GoingToOrFromNest == true and loopFunctions->FirstCheck == true)
               {
                   SetHardStopMovement();
               }
@@ -536,7 +546,7 @@ void DSA_controller::ControlStep()
       
       stRobotData.pathcheck = false;
       stRobotData.Waypoint_Added = false;
-//      SetMovement();
+      SetMovement();
   }
     
 //  else if(loopFunctions->FirstCheck == 1 and  loopFunctions->NewWayPointAdded == 1)
@@ -549,8 +559,8 @@ void DSA_controller::ControlStep()
 //      SetHardStopMovement();
 //  }
     
-
-  if(stRobotData.StopMovement == true)
+ if(stRobotData.StopMovement == true and loopFunctions->FirstCheck == true)
+  //if(stRobotData.StopMovement == true and loopFunctions->FirstCheck == true)
   {
       SetStopMovement();
   }

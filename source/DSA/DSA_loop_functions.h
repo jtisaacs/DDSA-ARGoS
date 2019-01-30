@@ -160,6 +160,9 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     bool RobotReachedWayPoint;
     bool NewWayPointAdded;
     char direction_last;
+    string file_path;
+    string file_name;
+    string full_path;
     const argos::Real CollinearGap = 0.3;
     const argos::Real Safedistance = 0.5;
     const argos::Real Searcher_Gap = 0.18;
@@ -171,6 +174,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     argos::CRange<argos::Real>   ForageRangeX_1;
     argos::CRange<argos::Real>   ForageRangeY_1;
     argos::Real FOOTBOT_RADIUS   = 0.085036758f;
+    size_t RobotNumber;
 };
 
 #endif /* DSA_LOOP_FUNCTIONS_H */

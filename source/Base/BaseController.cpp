@@ -23,6 +23,7 @@ BaseController::BaseController() :
     heading_to_nest(false),
     DestinationNoiseStdev(0),
     PositionNoiseStdev(0),
+    Initial_State(true),
 //    StopMovement(false),
     RNG(argos::CRandom::CreateRNG("argos"))
 {
@@ -53,12 +54,14 @@ BaseController::BaseController() :
     stRobotData.GoingToOrFromNest = false;
     stRobotData.WaypointStackpopped = false;
     stRobotData.Intersection_Adjustment = 0;
+    stRobotData.Total_robots = 0;
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
     stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
     stRobotData.CrossProduct.Set(1,1,1);
-    stRobotData.vect1.Set(0,0);
-    stRobotData.vect2.Set(0,0);
+    stRobotData.vect1.Set(0,0,0);
+    stRobotData.vect2.Set(0,0,0);
+    stRobotData.Theta = ToRadians(argos::CDegrees(0.0f));
     stRobotData.IntersectionTime = 0;
 }
 
@@ -532,6 +535,12 @@ void BaseController::Move() {
 
 
 //    if(Wait() == true) return;
+    
+//    if(Initial_State == true and stRobotData.id_robot < (stRobotData.Total_robots - 1))
+//    {
+//        stRobotData.StopTurningTime = ((stRobotData.id_robot + 1) * 100);
+//        Initial_State = false;
+//    }
     
     if(CheckStopTime() == true) return;
     

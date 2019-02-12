@@ -65,6 +65,7 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector2 StartWaypoint;
             argos::CVector2 AddedPoint;
             argos::UInt16 id_robot;
+            argos::UInt16 Total_robots;
             argos::Real Priority;
             argos::UInt16 WaypointCounter;
             argos::Real fBaseAngularWheelSpeed;
@@ -90,8 +91,9 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector2 IntersectionPt2;
             argos::CVector3 CrossProduct;
             argos::UInt16 IntersectionTime;
-            argos::CVector2 vect1;
-            argos::CVector2 vect2;
+            argos::CVector3 vect1;
+            argos::CVector3 vect2;
+            argos::CRadians Theta;
 
         };
     
@@ -216,7 +218,7 @@ public:
         argos::UInt16 GetInitial_TurningWaitTime(BaseController::RobotData stRobotData);
 
 	bool heading_to_nest;
-
+    bool Initial_State;
 };
 
 #endif /* IANTBASECONTROLLER_H */

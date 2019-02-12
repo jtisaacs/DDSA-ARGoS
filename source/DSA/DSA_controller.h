@@ -44,7 +44,7 @@ class DSA_controller : public BaseController {
 
 
         /* Robot DSA state variable */
-        enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3 } DSA;
+        enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3, START_SPIRAL = 4} DSA;
 
         /* robot internal variables & statistics */
         CRandom::CRNG*      RNG;
@@ -75,7 +75,7 @@ class DSA_controller : public BaseController {
         size_t              stopTimeStep;
         size_t              collisionDelay;
 	char direction_last;
-    argos::UInt8 FirstTimeSearch;
+    argos::UInt16 FirstTimeSearch;
         /* movement functions */
         CDegrees angleInDegrees;
 
@@ -92,7 +92,9 @@ class DSA_controller : public BaseController {
 
 	string results_path;
 	string results_full_path;
-    size_t CircuitNumber = 1;
+    argos::UInt8 CircuitNumber;
+    argos::UInt32 BaseTime;
+    bool BeginSpiral;
 };
 
 #endif /* DSA_CONTROLLER_H */

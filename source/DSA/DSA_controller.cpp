@@ -302,7 +302,7 @@ void DSA_controller::GetPattern(string ith_Pattern)
 {
     copy(ith_Pattern.begin(),ith_Pattern.end(),back_inserter(tempPattern));
     reverse(tempPattern.begin(), tempPattern.end());
-    copy(tempPattern.begin(), tempPattern.end(),back_inserter(stRobotData.pattern));
+    copy(ith_Pattern.begin(), ith_Pattern.end(),back_inserter(stRobotData.pattern));
     reverse(stRobotData.pattern.begin(), stRobotData.pattern.end());
 }
 
@@ -312,7 +312,9 @@ void DSA_controller::GetPattern(string ith_Pattern)
 void DSA_controller::CopyPatterntoTemp() 
 {
     copy(pattern.begin(),pattern.end(),back_inserter(tempPattern));
+    copy(pattern.begin(),pattern.end(),back_inserter(stRobotData.pattern));
     reverse(tempPattern.begin(),tempPattern.end());/* Reverses the tempPattern */
+    reverse(stRobotData.pattern.begin(),stRobotData.pattern.end());/* Reverses the tempPattern */
     
 }
 
@@ -322,32 +324,44 @@ void DSA_controller::CopyPatterntoTemp()
  *****/
 void DSA_controller::ControlStep() 
 {
-    
-//    argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
-//    argos::LOG<<"Stop Turning Time: "<<stRobotData.StopTurningTime<<std::endl;
-//
-//    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
+
+    argos::LOG<<"Robot ID: "<<stRobotData.id_robot<<std::endl;
+    argos::LOG<<"Stop Turning Time: "<<stRobotData.StopTurningTime<<std::endl;
+//    argos::LOG<<"DSA State: "<<DSA<<std::endl;
+    argos::LOG<<"First Check: "<<loopFunctions->FirstCheck<<std::endl;
 //    argos::LOG<<"First Time Search: "<<FirstTimeSearch<<std::endl;
-//
-//    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
-//    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
-//    argos::LOG<<"NewWaypointAdded: "<<loopFunctions->NewWayPointAdded<<std::endl;
-//    argos::LOG<<"StopMovement Flag: "<< stRobotData.StopMovement<<std::endl;
-//    argos::LOG<<"Intersection point change direction: "<<stRobotData.IntersectionPt1<<std::endl;
-//    argos::LOG<<"Intersection point at safe dist: "<<stRobotData.IntersectionPt2<<std::endl;
+
+    argos::LOG<<"Going to nest: "<<stRobotData.GoingToNest<<std::endl;
+    argos::LOG<<"Going to/from nest: "<<stRobotData.GoingToOrFromNest<<std::endl;
+    argos::LOG<<"NewWaypointAdded: "<<loopFunctions->NewWayPointAdded<<std::endl;
+    argos::LOG<<"StopMovement Flag: "<< stRobotData.StopMovement<<std::endl;
+    argos::LOG<<"Intersection point change direction: "<<stRobotData.IntersectionPt1<<std::endl;
+    argos::LOG<<"Intersection point at safe dist: "<<stRobotData.IntersectionPt2<<std::endl;
 //    argos::LOG<<"Robot Data Checked: "<<stRobotData.Checked<<std::endl;
 //    argos::LOG<<"movemnt state: "<<CurrentMovementState<<std::endl;
 //    argos::LOG<<"Movement Stack Size: "<<MovementStack.size()<<std::endl;
-//    argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
-//
-//    argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+    argos::LOG<<"Start Location: "<<stRobotData.StartWaypoint<<std::endl;
+
+    argos::LOG<<"Target Location: "<<stRobotData.TargetWaypoint<<std::endl;
+    argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
 //    argos::LOG<<"Dot Product: "<<stRobotData.Priority<<std::endl;
-//    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
+    argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
 //    argos::LOG<<"Robot path Checked: "<<stRobotData.pathcheck<<std::endl;
 //    argos::LOG<<"Steps To Activate Algorithm: "<<StepsToActivateAlgorithm<<std::endl;
-//    argos::LOG<<"theta: "<<stRobotData.Theta <<std::endl;
-////    argos::LOG<<"Z coordinate: "<<stRobotData.Theta<<std::endl;
-//    argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
+    argos::LOG<<"Dot Product: "<<stRobotData.Priority<<std::endl;
+    argos::LOG<<"theta: "<<stRobotData.Theta <<std::endl;
+    argos::LOG<<"heading angle: "<<stRobotData.HeadingAngle <<std::endl;
+//    argos::LOG<<"Intersection flag: "<<st_IntersectionData.Intersection_flag<<std::endl;
+    argos::LOG<<"Intersection point: "<<st_IntersectionData.IntersectionPoint<<std::endl;
+    argos::LOG<<"Ticks to reach intersection: "<<stRobotData.Intial_TurningWaitTime<<std::endl;
+    argos::LOG<<"Temp Pattern size: "<<tempPattern.size()<<std::endl;
+    argos::LOG<<"Robot Pattern size: "<<stRobotData.pattern.size()<<std::endl;
+    argos::LOG<<"inter: "<<stRobotData.Inter<<std::endl;
+     argos::LOG<<"direction: "<<stRobotData.direction<<std::endl;
+     argos::LOG<<"prev direction: "<<stRobotData.prevdirection<<std::endl;
+     argos::LOG<<"POinctChange: "<<stRobotData.PointChange<<std::endl;
+     argos::LOG<<"PointSafe: "<<stRobotData.PointSafe<<std::endl;
+    argos::LOG<<"---------------------------------------------------------------------"<<std::endl;
     
 //    argos::LOG<<"Movement State: "<<CurrentMovementState<<std::endl;
 //    argos::LOG<<"Temp pattern: "<<tempPattern.size()<<std::endl;
@@ -678,15 +692,19 @@ void DSA_controller::SetTargetW(char x){
 //         stRobotData.Checked = true;
 //     }
     
-    if(TargetHit() == true && tempPattern.size() > 0) {
-        
-    if(FirstTimeSearch < StepsToActivateAlgorithm)
+    if(TargetHit() == true && tempPattern.size() > 0)
     {
-              FirstTimeSearch++;
-    }
+        
+        if(FirstTimeSearch < StepsToActivateAlgorithm)
+        {
+                  FirstTimeSearch++;
+        }
 
-      /* Finds the last direction of the pattern. */
-      direction_last = tempPattern[tempPattern.size() - 1];
+        //Calculate points to check for intersection
+//        CalculatePointsForIntersection();
+
+        /* Finds the last direction of the pattern. */
+        direction_last = tempPattern[tempPattern.size() - 1];
 
         switch(direction_last)
         {
@@ -702,18 +720,110 @@ void DSA_controller::SetTargetW(char x){
             case 'W':
                 SetTargetW('W');
                 break;
-	}
-
-	tempPattern.pop_back();
-    stRobotData.pattern.pop_back();
+        }
+    
+        tempPattern.pop_back();
+        stRobotData.pattern.pop_back();
         
     }
     
     else if(tempPattern.size() == 0) 
-      {
-    	Stop();
-      }
+    {
+        Stop();
+    }
 }
+
+/*****
+ * Function that predicts path of robot to consider for chances of
+ * intersection with other robots
+ *****/
+void DSA_controller::CalculatePointsForIntersection()
+{
+    argos::UInt8 index;
+    CVector2 CurrentPosition,DirectionChangedPoint, SafeDistancePoint;
+    argos::Real CurrentX, CurrentY;
+    char previous_direction, direction;
+    
+    CurrentX = 0;
+    CurrentY = 0;
+    
+    index = 0;
+    // Set the previous direction to current direction
+    previous_direction = tempPattern[(tempPattern.size() - 1)];
+//    direction = previous_direction;
+    
+    
+    //Get current target position
+    CurrentPosition = GetTarget();
+    CurrentX = CurrentPosition.GetX();
+    CurrentY = CurrentPosition.GetY();
+    
+    argos::LOG<<"Current_Target: "<<CurrentPosition<<std::endl;
+    
+    DirectionChangedPoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+    SafeDistancePoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+    
+    for(index=0;index<6;index++)
+    {
+        direction = tempPattern[(tempPattern.size() - 1) - index];
+ 
+        if(((tempPattern.size() - 1) - index) > 0)
+        {
+            switch(direction)
+            {
+                case 'N':
+                    if(direction != previous_direction)
+                    {
+                        DirectionChangedPoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+                    }
+                    CurrentX = CurrentX + SearcherGap;
+                    CurrentY = CurrentY;
+                    CurrentPosition.Set(CurrentX,CurrentY);
+                    break;
+                    
+                case 'S':
+                    if(direction != previous_direction)
+                    {
+                        DirectionChangedPoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+                    }
+                    CurrentX = CurrentX - SearcherGap;
+                    CurrentY = CurrentY;
+                    CurrentPosition.Set(CurrentX,CurrentY);
+                    break;
+                    
+                case 'E':
+                    if(direction != previous_direction)
+                    {
+                        DirectionChangedPoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+                    }
+                    CurrentX = CurrentX ;
+                    CurrentY = CurrentY - SearcherGap;
+                    CurrentPosition.Set(CurrentX,CurrentY);
+                    break;
+                
+                case 'W':
+                    if(direction != previous_direction)
+                    {
+                        DirectionChangedPoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+                    }
+                    CurrentX = CurrentX ;
+                    CurrentY = CurrentY + SearcherGap;
+                    CurrentPosition.Set(CurrentX,CurrentY);
+                    break;
+         
+            }//end of switch
+            
+            previous_direction = direction;
+        }// end of if
+    }// end of for
+    
+    
+    SafeDistancePoint.Set(CurrentPosition.GetX(), CurrentPosition.GetY());
+ 
+//    stRobotData.IntersectionPt1.Set(DirectionChangedPoint.GetX(), DirectionChangedPoint.GetY());
+//    stRobotData.IntersectionPt2.Set(SafeDistancePoint.GetX(), SafeDistancePoint.GetY());
+}
+
 
 /*****
  * Returns a boolean based on weather the robot is with 0.01 
@@ -777,6 +887,7 @@ void DSA_controller::Reset() {
     SetIsHeadingToNest(true);
     SetTarget(loopFunctions->NestPosition);
     tempPattern.clear();
+    stRobotData.pattern.clear();
     CopyPatterntoTemp();
     generatePattern(NumberOfSpirals, NumberOfRobots);
     

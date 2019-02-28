@@ -62,7 +62,7 @@
                   RobotRotationSpeed      = "8.0"
 		          DestinationNoiseStdev = "0.0"
                   PositionNoiseStdev = "0.0"
-                  CircuitToActivateAlgo = "1.0"
+                  CircuitToActivateAlgo = "0.0"
                   ResultsDirectoryPath = "results_Apurva/"/>
 	          
       </params>
@@ -122,13 +122,14 @@
   <!-- ****************** -->
   <!-- * Visualization * -->
   <!-- ****************** -->
-<!--  <visualization>-->
-<!--    <qt-opengl>-->
-<!--      <camera>-->
-<!--        <placement idx="0" position="  0, 0, 10" look_at="0, 0, 0" lens_focal_length="25"/>-->
-<!--      </camera>-->
-<!--      <user_functions label="DSA_qt_user_functions"/>-->
-<!--    </qt-opengl>-->
-<!--  </visualization>-->
+  <visualization>
+    <qt-opengl>
+      <camera>
+        <placement idx="0" position="  0, 0, 10" look_at="0, 0, 0" lens_focal_length="25"/>
+        <placement idx="1" position="  0, 0, 4" look_at="0, 0, 0" lens_focal_length="30"/>
+      </camera>
+      <user_functions label="DSA_qt_user_functions"/>
+    </qt-opengl>
+  </visualization>
 
 </argos-configuration>

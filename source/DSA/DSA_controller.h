@@ -36,12 +36,14 @@ class DSA_controller : public BaseController {
 		argos::Real SimTimeInSeconds();
         std::string  extractID(std::string str);
     
+    
     private:
 
         size_t NumberOfRobots;
         size_t NumberOfSpirals;
         argos::UInt16 StepsToActivateAlgorithm;
-
+    
+    
 
         /* Robot DSA state variable */
         enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3, START_SPIRAL = 4} DSA;
@@ -55,13 +57,13 @@ class DSA_controller : public BaseController {
 
         vector<CRay3>       myTrail;
         CColor              TrailColor;
-    Real                FoodHoldingRandValue;
-	Real                ProbTargetDetection;
+        Real                FoodHoldingRandValue;
+	    Real                ProbTargetDetection;
         Real                SearcherGap;
         Real                FoodDistanceTolerance;
        	CVector2            previous_position;
-	CVector2            previous_target;
-	CVector2            newTarget;
+        CVector2            previous_target;
+        CVector2            newTarget;
         CVector3            startPosition;
         vector<char>        pattern;
         vector<char>        tempPattern;
@@ -74,8 +76,9 @@ class DSA_controller : public BaseController {
         CRange<CRadians>    Tolerance;
         size_t              stopTimeStep;
         size_t              collisionDelay;
-	char direction_last;
-    argos::UInt16 FirstTimeSearch;
+        char direction_last;
+        char previous_direction;
+        argos::UInt16 FirstTimeSearch;
         /* movement functions */
         CDegrees angleInDegrees;
 
@@ -88,13 +91,14 @@ class DSA_controller : public BaseController {
         void GetTargets();
         void CopyPatterntoTemp();
         bool TargetHit();
-        void SetHoldingFood(); 
+        void SetHoldingFood();
+        void CalculatePointsForIntersection();
 
-	string results_path;
-	string results_full_path;
-    argos::UInt8 CircuitNumber;
-    argos::UInt32 BaseTime;
-    bool BeginSpiral;
+        string results_path;
+        string results_full_path;
+        argos::UInt8 CircuitNumber;
+        argos::UInt32 BaseTime;
+        bool BeginSpiral;
 };
 
 #endif /* DSA_CONTROLLER_H */

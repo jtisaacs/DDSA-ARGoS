@@ -83,7 +83,7 @@ class BaseController : public argos::CCI_Controller {
             bool CollinearFlag;
             bool pathcheck;
             bool WaypointStackpopped;
-            argos::Real InitialOrientation;
+            argos::CRadians Orientation;
             argos::CDegrees HeadingAngle;
             std::stack<argos::CVector2>WaypointStack;
             std::vector<char> pattern;
@@ -94,6 +94,11 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector3 vect1;
             argos::CVector3 vect2;
             argos::CRadians Theta;
+            argos::UInt8 Inter;
+            argos::CVector2 PointChange;
+            argos::CVector2 PointSafe;
+            char direction;
+            char prevdirection;
 
         };
     

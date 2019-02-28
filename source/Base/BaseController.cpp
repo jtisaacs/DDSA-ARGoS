@@ -40,7 +40,7 @@ BaseController::BaseController() :
     stRobotData.StopTurningTime = 0;
     collision_counter = 0;
     stRobotData.pathcheck = false;
-    stRobotData.InitialOrientation = 0;
+    stRobotData.Orientation = ToRadians(argos::CDegrees(0.0f));;
     stRobotData.Priority = 0;
     stRobotData.CollinearFlag = false;
     stRobotData.Waypoint_Added = false;
@@ -58,11 +58,15 @@ BaseController::BaseController() :
 //    stRobotData.HeadingAngle = 0;
     stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
     stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
+    stRobotData.IntersectionPt1.Set(0,0);
+    stRobotData.IntersectionPt2.Set(0,0);
     stRobotData.CrossProduct.Set(1,1,1);
     stRobotData.vect1.Set(0,0,0);
     stRobotData.vect2.Set(0,0,0);
     stRobotData.Theta = ToRadians(argos::CDegrees(0.0f));
     stRobotData.IntersectionTime = 0;
+    stRobotData.HeadingAngle = argos::CDegrees(0.0f);
+    stRobotData.Inter = 0;
 }
 
 
@@ -148,6 +152,7 @@ argos::CVector2 BaseController::GetPosition() {
 argos::CVector2 BaseController::GetTarget() {
 //    return TargetPosition;
     return stRobotData.TargetPosition;
+//    return stRobotData.TargetWaypoint;
 }
 
 void BaseController::SetTarget(argos::CVector2 t) {
@@ -284,9 +289,11 @@ void BaseController::SetNextMovement()
 //        argos::CRadians headingToTarget = (TargetPosition - GetPosition()).Angle();
         argos::Real distanceToTarget = (stRobotData.TargetWaypoint - GetPosition()).Length();
         argos::CRadians headingToTarget = (stRobotData.TargetWaypoint - GetPosition()).Angle();
+        stRobotData.Orientation = GetHeading();
         stRobotData.NormailzedVector = (TargetPosition - GetPosition()).Normalize();
         argos::CRadians headingToTargetError = (GetHeading() - headingToTarget).SignedNormalize();
        
+//        stRobotData.HeadingAngle = ToDegrees(headingToTarget);
         if(!IsAtTarget())
         {
             if(headingToTargetError > AngleTol)
@@ -528,7 +535,7 @@ void BaseController::ResetIntersectionData() {
     st_IntersectionData.Intersection_flag = false;
     
     st_IntersectionData.IntersectionPoint.Set(0,0);
-    
+   
 }
 
 void BaseController::Move() {

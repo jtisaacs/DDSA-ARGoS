@@ -41,8 +41,8 @@ class DSA_controller : public BaseController {
 
         size_t NumberOfRobots;
         size_t NumberOfSpirals;
-        argos::UInt16 StepsToActivateAlgorithm;
-    
+        int StepsToActivateAlgorithm;
+        int StepsToActivate;
     
 
         /* Robot DSA state variable */
@@ -96,7 +96,7 @@ class DSA_controller : public BaseController {
 
         string results_path;
         string results_full_path;
-        argos::UInt8 CircuitNumber;
+        int CircuitNumber;
         argos::UInt32 BaseTime;
         bool BeginSpiral;
 };

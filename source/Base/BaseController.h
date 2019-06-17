@@ -65,21 +65,21 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector2 StartWaypoint;
             argos::CVector2 AddedPoint;
             argos::UInt16 id_robot;
-            argos::UInt16 Total_robots;
-            argos::Real Priority;
+//            argos::UInt16 Total_robots;
+//            argos::Real Priority;
             argos::UInt16 WaypointCounter;
             argos::Real fBaseAngularWheelSpeed;
             argos::Real fLinearWheelSpeed;
             bool GoingToNest;
             bool GoingToOrFromNest;
-            bool MovementStarted;
+//            bool MovementStarted;
             bool StopMovement;
-            argos::CVector2 NormailzedVector;
-            argos::UInt16 Intial_TurningWaitTime;
+//            argos::CVector2 NormailzedVector;
+//            argos::UInt16 Intial_TurningWaitTime;
             argos::UInt16 StopTurningTime;
             bool Checked;
             bool Waypoint_Added;
-            bool Intersection_Adjustment;
+//            bool Intersection_Adjustment;
             bool CollinearFlag;
             bool pathcheck;
             bool WaypointStackpopped;
@@ -89,26 +89,44 @@ class BaseController : public argos::CCI_Controller {
             std::vector<char> pattern;
             argos::CVector2 IntersectionPt1;
             argos::CVector2 IntersectionPt2;
-            argos::CVector3 CrossProduct;
-            argos::UInt16 IntersectionTime;
-            argos::CVector3 vect1;
-            argos::CVector3 vect2;
+//            argos::CVector3 CrossProduct;
+//            argos::UInt16 IntersectionTime;
+//            argos::CVector3 vect1;
+//            argos::CVector3 vect2;
             argos::CRadians Theta;
-            argos::UInt8 Inter;
-            argos::CVector2 PointChange;
-            argos::CVector2 PointSafe;
+//            argos::UInt8 Inter;
+//            argos::CVector2 PointChange;
+//            argos::CVector2 PointSafe;
             char direction;
             char prevdirection;
+//            argos::CRadians AngleTurn;
+            std::vector<argos::UInt8>Neighbors;
+            std::vector < std::vector<argos::UInt8> > NeighborsMatrix;
+//            std::stack<argos::UInt16>CollinearRobots;
+//            std::stack<argos::UInt16>IntersectingRobots;
+//            argos::CMatrix <>NeighborMatrix;
 
         };
     
+//    struct IntersectionData{
+//        argos::UInt16 Robot_ID_Intersectingwith;
+//        bool Intersection_flag;
+//        argos::Real IntersectionDistance;
+//        argos::CVector2 IntersectionPoint;
+//    };
         struct IntersectionData{
             argos::UInt16 Robot_ID_Intersectingwith;
-            bool Intersection_flag;
+            argos::UInt8 Intersection_flag;
+            argos::UInt8 Intersection_Type;
+            argos::UInt16 StopTimeCalculated;
             argos::Real IntersectionDistance;
+            argos::CVector2 StartPoint;
+            argos::CVector2 TargetPoint;
             argos::CVector2 IntersectionPoint;
         };
     
+        std::vector<IntersectionData> IntersectionDataVector;
+ 
         /*
          * Returns the robot data
          */
@@ -119,9 +137,17 @@ class BaseController : public argos::CCI_Controller {
         /*
          * Returns the intersection data of the robot
          */
-        inline IntersectionData& GetIntersectionData() {
-            return st_IntersectionData;
-        }
+//        inline IntersectionData& GetIntersectionData() {
+//            return st_IntersectionData;
+//        }
+
+//        inline  std::vector<IntersectionData>& GetIntersectionData() {
+//            return IntersectionDataVector;
+//        }
+    
+            inline  std::vector<IntersectionData>* GetIntersectionData() {
+                return &IntersectionDataVector;
+            }
 
         void SetIsHeadingToNest(bool n);
 
@@ -147,7 +173,7 @@ public:
 
     std::stack<Movement> MovementStack;
     
-    IntersectionData st_IntersectionData;
+//    IntersectionData st_IntersectionData;
 //    argos::Real RobotForwardSpeed;
     size_t WaitTime;
 

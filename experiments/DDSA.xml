@@ -11,7 +11,7 @@
 <!--    <experiment length="1800"-->
     <experiment length="1800"
                 ticks_per_second="32"
-                random_seed="124"/>
+                random_seed="100"/>
                 
   </framework>
 
@@ -62,7 +62,8 @@
                   RobotRotationSpeed      = "8.0"
 		          DestinationNoiseStdev = "0.0"
                   PositionNoiseStdev = "0.0"
-                  CircuitToActivateAlgo = "0.0"
+                  CircuitToActivateAlgo = "1.0"
+                  TargetStepsToActivateAlgo = "-1.0"
                   ResultsDirectoryPath = "results_Apurva/"/>
 	          
       </params>
@@ -79,7 +80,7 @@
 <!--      NestRadius = "0.25"-->
 <!--      />-->
   <DDSA PrintFinalScore = "1" FoodItemCount = "256" FoodBoundsWidth="10" FoodBoundsHeight="10"
-  FoodDistribution = "2" ResultsPath = "results_Apurva/" RobotNum = "3"
+  FoodDistribution = "2" ResultsPath = "results_Apurva/" RobotNum = "3" NeighborRadius="1.0"
   NestRadius = "0.4"
   />
 
@@ -122,14 +123,14 @@
   <!-- ****************** -->
   <!-- * Visualization * -->
   <!-- ****************** -->
-  <visualization>
-    <qt-opengl>
-      <camera>
-        <placement idx="0" position="  0, 0, 10" look_at="0, 0, 0" lens_focal_length="25"/>
-        <placement idx="1" position="  0, 0, 4" look_at="0, 0, 0" lens_focal_length="30"/>
-      </camera>
-      <user_functions label="DSA_qt_user_functions"/>
-    </qt-opengl>
-  </visualization>
+<!--  <visualization>-->
+<!--    <qt-opengl>-->
+<!--      <camera>-->
+<!--        <placement idx="0" position="  0, 0, 10" look_at="0, 0, 0"  up="0, 1, 0" lens_focal_length="25"/>-->
+<!--        <placement idx="1" position="  0, 0, 4" look_at="0, 0, 0" up="0, 1, 0" lens_focal_length="30"/>-->
+<!--      </camera>-->
+<!--      <user_functions label="DSA_qt_user_functions"/>-->
+<!--    </qt-opengl>-->
+<!--  </visualization>-->
 
 </argos-configuration>

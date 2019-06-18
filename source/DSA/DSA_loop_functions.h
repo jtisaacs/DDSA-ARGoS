@@ -63,7 +63,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
 //    void CheckCollinearity(BaseController::RobotData& ptr1, BaseController::RobotData &ptr2);
     void CheckCollinearity(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
     
-    void AddWayPoint(BaseController::RobotData *ptr, BaseController::RobotData *Otherptr);
+    void AddWayPoint(BaseController::RobotData *ptr);
     
     void CollinearityCollisionCheck(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
     
@@ -173,9 +173,16 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     argos::UInt8 TestVariable;
     argos::UInt8 TestValue;
     argos::CVector2 TestPoint;
-    argos::Real XPoints[8];
-    argos::CVector2 AnchorPoints[8] = {{0, 0.54}, {0.54, 0}, {-0.54, 0}, {0, -0.54}, {0.3818, 0.3818}, {-0.3818, -0.3818}, {-0.3818, 0.3818},
-                                    {0.3818, -0.3818}};
+    argos::Real AnchorRadius = 0.54;
+    argos::Real DiagonalAnchorPointX = AnchorRadius * argos::Cos(ToRadians(argos::CDegrees(45.0f)));
+    argos::Real DiagonalAnchorPointY = AnchorRadius * argos::Sin(ToRadians(argos::CDegrees(45.0f)));
+    
+    argos::CVector2 AnchorPoints[8] = {{0, AnchorRadius}, {AnchorRadius, 0}, {-AnchorRadius, 0}, {0, -AnchorRadius},
+                                       {DiagonalAnchorPointX, DiagonalAnchorPointY}, {-DiagonalAnchorPointX, -DiagonalAnchorPointY},
+                                       {-DiagonalAnchorPointX, DiagonalAnchorPointY}, {DiagonalAnchorPointX, -DiagonalAnchorPointY}};
+    
+//    argos::CVector2 AnchorPoints[8] = {{0, 0.54}, {0.54, 0}, {-0.54, 0}, {0, -0.54}, {0.3818, 0.3818}, {-0.3818, -0.3818}, {-0.3818, 0.3818},
+//                                    {0.3818, -0.3818}};
     
 	protected:
 

@@ -373,14 +373,9 @@ void DSA_controller::ControlStep()
     argos::LOG<<"Intersection Vetor Size: "<<IntersectionDataVector.size()<<std::endl;
     argos::LOG<<"Current Location: "<<GetPosition()<<std::endl;
     argos::LOG<<"Added Way Point: "<<stRobotData.AddedPoint<<std::endl;
-//    argos::LOG<<"Test Variable: "<<loopFunctions->TestVariable<<std::endl;
+    argos::LOG<<"Test Variable: "<<loopFunctions->TestVariable<<std::endl;
 //    argos::LOG<<"Test Value: "<<loopFunctions->TestValue<<std::endl;
 //    argos::LOG<<"Test Point: "<<loopFunctions->TestPoint<<std::endl;
-    
-    
-    
-    
-    
     
 //    argos::LOG<<"Steps To Activate Algorithm: "<<StepsToActivateAlgorithm<<std::endl;
 

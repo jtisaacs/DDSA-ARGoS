@@ -344,6 +344,35 @@ void BaseController::SetLeftTurn(argos::Real newAngleToTurnInDegrees) {
     }
 }
 
+///*****************************************************************************/
+//void BaseController::SetSoftLeftTurn(argos::Real newAngleToTurnInDegrees)
+//{
+//    if(newAngleToTurnInDegrees > 0.0) {
+//        TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
+//        CurrentMovementState = SOFT_LEFT;
+//        
+//    } else if(newAngleToTurnInDegrees < 0.0) {
+//        TicksToWaitWhileMoving = SetTargetAngleDistance(-newAngleToTurnInDegrees);
+//        CurrentMovementState = SOFT_RIGHT;
+//    } else {
+//        Stop();
+//    }
+//}
+//
+//void BaseController::SetSoftRightTurn(argos::Real newAngleToTurnInDegrees) {
+//    if(newAngleToTurnInDegrees > 0.0) {
+//        TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
+//        CurrentMovementState = SOFT_RIGHT;
+//    } else if(newAngleToTurnInDegrees < 0.0) {
+//        TicksToWaitWhileMoving = SetTargetAngleDistance(-newAngleToTurnInDegrees);
+//        CurrentMovementState = SOFT_LEFT;
+//    } else {
+//        Stop();
+//    }
+//}
+//
+///*****************************************************************************/
+
 void BaseController::SetRightTurn(argos::Real newAngleToTurnInDegrees) {
     if(newAngleToTurnInDegrees > 0.0) {
         TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
@@ -589,6 +618,28 @@ void BaseController::Move() {
             }
             break;
         }
+            
+//        case SOFT_LEFT:
+//        {
+//            if((TicksToWaitWhileMoving--) <= 0.0) {
+//                Stop();
+//            }
+//            else {
+//
+//                Real fSpeedFactor = (90 - Abs(cHeadingAngle)) / 90;
+//                fSpeed1 = RobotRotationSpeed - RobotRotationSpeed * (1.0 - fSpeedFactor);
+//                fSpeed2 = RobotRotationSpeed + RobotRotationSpeed * (1.0 - fSpeedFactor);
+//
+//
+//                wheelActuator->SetLinearVelocity(fSpeed1,
+//                                                 fSpeed2);
+//            }
+//            break;
+//        }
+//        case SOFT_RIGHT:
+//        {
+//
+//        }
     }
 }
 

@@ -81,6 +81,7 @@ class BaseController : public argos::CCI_Controller {
             bool Waypoint_Added;
 //            bool Intersection_Adjustment;
             bool CollinearFlag;
+            bool AddWaypoint;
             bool pathcheck;
             bool WaypointStackpopped;
             argos::CRadians Orientation;

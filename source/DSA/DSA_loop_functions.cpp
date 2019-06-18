@@ -1216,24 +1216,21 @@ void DSA_loop_functions::CheckCollisionWithNeighbors(bool CheckOnlyCollinearity)
 
                 // check if the robots are collinear
                 // ptr to the robot data of both the robots
-                CheckCollinearity(stRobotDataThis, stRobotDataNeighbor);
-
-                // update the matrix if the robots are collinear
-                if(stRobotDataThis->CollinearFlag == true)
+                if(CheckOnlyCollinearity == true)
                 {
-//                    // add waypoint if the robot is collinear and going out of nest
-//                    AddWayPoint(stRobotDataThis, stRobotDataNeighbor);
-                    
-//                    // add waypoint if the robot is collinear and going out of nest
-//                    AddWayPoint(stRobotDataNeighbor, stRobotDataNeighbor);
-                    
-                    // ptr for matrix to update, matrix indices of the robots, value to update
-                    InitializeMatrixElementAndTransformElement(stRobotDataThis,0,(robotneighborindex+1),COLLINEAR);
+                    CheckCollinearity(stRobotDataThis, stRobotDataNeighbor);
 
-                    // Reset the collinearity flag
-                    stRobotDataThis->CollinearFlag = false;
-                    stRobotDataNeighbor->CollinearFlag = false;
+                    // update the matrix if the robots are collinear
+                    if(stRobotDataThis->CollinearFlag == true)
+                    {
+                        // ptr for matrix to update, matrix indices of the robots, value to update
+                        InitializeMatrixElementAndTransformElement(stRobotDataThis,0,(robotneighborindex+1),COLLINEAR);
 
+                        // Reset the collinearity flag
+                        stRobotDataThis->CollinearFlag = false;
+                        stRobotDataNeighbor->CollinearFlag = false;
+
+                    }
                 }
                 // check for intersection
                 else if(CheckOnlyCollinearity == false)
@@ -2027,6 +2024,7 @@ void DSA_loop_functions::Avoid_Collision()
                        {
                            stRobotDataNeighbor->AddWaypoint = false;
                            stRobotDataNeighborNext->AddWaypoint = false;
+                           
                            //Collinearity handling
                            AvoidCollinearCollision(stRobotDataNeighbor, stRobotDataNeighborNext, stRobotDataThis, stIntersectionDataNeighbor,
                                                    stIntersectionDataNeighborNext);

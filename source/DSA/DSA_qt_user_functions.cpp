@@ -20,7 +20,7 @@ void DSA_qt_user_functions::DrawOnRobot(CFootBotEntity& entity) {
     DSA_controller& c = dynamic_cast<DSA_controller&>(entity.GetControllableEntity().GetController());
 
     if(c.IsHoldingFood() == true) {
-        DrawCylinder(CVector3(0.0, 0.0, 0.2), CQuaternion(), loopFunctions.FoodRadius, 0.025, CColor::BLACK);
+        DrawCylinder(CVector3(0.0, 0.0, 0.3), CQuaternion(), loopFunctions.FoodRadius, 0.025, CColor::BLACK);
     }
 
     if(loopFunctions.DrawIDs == 1) {

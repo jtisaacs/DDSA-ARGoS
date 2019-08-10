@@ -7,10 +7,9 @@
   <!-- ************************* -->
   <framework>
     <system     threads="0" />
-<!--<system threads="2" method="balance_quantity" />-->
-<!--    <experiment length="1800"-->
+
     <experiment length="1800"
-                ticks_per_second="32"
+                ticks_per_second="48"
                 random_seed="120"/>
                 
   </framework>
@@ -58,11 +57,11 @@
                   FoodDistanceTolerance   = "0.13"
                   SearcherGap             = "0.18"
 		          SearchStepSize          = "0.08"
-                  RobotForwardSpeed       = "16.0"
-                  RobotRotationSpeed      = "8.0"
+                  RobotForwardSpeed       = "8.0"
+                  RobotRotationSpeed      = "10.0"
 		          DestinationNoiseStdev = "0.0"
                   PositionNoiseStdev = "0.0"
-                  CircuitToActivateAlgo = "0.0"
+                  CircuitToActivateAlgo = "1.0"
                   TargetStepsToActivateAlgo = "-1.0"
                   ResultsDirectoryPath = "results_Apurva/"/>
 	          
@@ -79,10 +78,15 @@
 <!--      FoodDistribution = "2"-->
 <!--      NestRadius = "0.25"-->
 <!--      />-->
-  <DDSA PrintFinalScore = "1" FoodItemCount = "256" FoodBoundsWidth="10" FoodBoundsHeight="10"
-  FoodDistribution = "2" ResultsPath = "results_Apurva/" RobotNum = "3" NeighborRadius="1.0"
-  NestRadius = "0.4"
-  />
+
+<DDSA PrintFinalScore = "1" FoodItemCount = "64" FoodBoundsWidth="10" FoodBoundsHeight="10"
+FoodDistribution = "1" ResultsPath = "results_Apurva/" NeighborRadius="2.0"
+NestRadius = "0.4"
+/>
+<!--  <DDSA PrintFinalScore = "1" FoodItemCount = "256" FoodBoundsWidth="10" FoodBoundsHeight="10"-->
+<!--  FoodDistribution = "1" ResultsPath = "results_Apurva/" NeighborRadius="2.0"-->
+<!--  NestRadius = "0.4"-->
+<!--  />-->
 
   </loop_functions>
         

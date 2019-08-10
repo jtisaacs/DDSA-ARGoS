@@ -15,9 +15,9 @@ BaseController::BaseController() :
     NestAngleTolerance(0.05),
     TargetDistanceTolerance(0.01),
     TargetAngleTolerance(0.04),
-    SearchStepSize(0.16),
-    RobotForwardSpeed(16.0),
-    RobotRotationSpeed(8.0),
+    SearchStepSize(0.18),
+    RobotForwardSpeed(10.0),
+    RobotRotationSpeed(10.0),
     TicksToWaitWhileMoving(0.0),
     CurrentMovementState(STOP),
     heading_to_nest(false),
@@ -39,6 +39,7 @@ BaseController::BaseController() :
 //    stRobotData.Checked = 0;
     stRobotData.StopTurningTime = 0;
     collision_counter = 0;
+    stRobotData.CollisionCounter = 0;
     stRobotData.pathcheck = false;
     stRobotData.Orientation = ToRadians(argos::CDegrees(0.0f));
 //    stRobotData.Priority = 0;
@@ -52,12 +53,13 @@ BaseController::BaseController() :
     stRobotData.Checked = false;
     stRobotData.GoingToNest = false;
     stRobotData.GoingToOrFromNest = false;
+    stRobotData.AddWaypoint = false;
     stRobotData.WaypointStackpopped = false;
 //    stRobotData.Intersection_Adjustment = 0;
 //    stRobotData.Total_robots = 0;
 //    stRobotData.HeadingAngle = 0;
-    stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
-    stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
+//    stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
+//    stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
     stRobotData.IntersectionPt1.Set(0,0);
     stRobotData.IntersectionPt2.Set(0,0);
 //    stRobotData.CrossProduct.Set(1,1,1);
@@ -66,6 +68,9 @@ BaseController::BaseController() :
     stRobotData.Theta = ToRadians(argos::CDegrees(0.0f));
 //    stRobotData.IntersectionTime = 0;
     stRobotData.HeadingAngle = argos::CDegrees(0.0f);
+    stRobotData.CosTheta = 0;
+    stRobotData.CollinearAvoidance = false;
+    stRobotData.QuadrantGroup = 0;
 //    stRobotData.Inter = 0;
 //    stRobotData.AngleTurn = ToRadians(argos::CDegrees(0.0f));
 }
@@ -258,26 +263,27 @@ void BaseController::SetNextMovement()
     
     if(MovementStack.size() == 0 && CurrentMovementState == STOP)
     {
-
-//        argos::Real distanceToTarget = (TargetPosition - GetPosition()).Length();
-//        argos::CRadians headingToTarget = (TargetPosition - GetPosition()).Angle();
         argos::Real distanceToTarget = (stRobotData.TargetWaypoint - GetPosition()).Length();
         argos::CRadians headingToTarget = (stRobotData.TargetWaypoint - GetPosition()).Angle();
         stRobotData.Orientation = GetHeading();
-//        stRobotData.NormailzedVector = (TargetPosition - GetPosition()).Normalize();
+
         argos::CRadians headingToTargetError = (GetHeading() - headingToTarget).SignedNormalize();
        
         if(!IsAtTarget())
         {
             if(headingToTargetError > AngleTol)
             {
-              //cout << "Turn Left " << endl;
-              PushMovement(LEFT, -ToDegrees(headingToTargetError).GetValue());
+        
+            
+                PushMovement(LEFT, -ToDegrees(headingToTargetError).GetValue());
+
             }
             else if(headingToTargetError < -AngleTol)
             {
-              //cout << "Turn Right " << endl;
+          
+            
               PushMovement(RIGHT, ToDegrees(headingToTargetError).GetValue());
+            
             }
             else
             {
@@ -287,22 +293,31 @@ void BaseController::SetNextMovement()
         }
             /* if stack is empty, robot has reached the target */
         else{
+//                SetHardStopMovement();
+                SetMovement();
                 PushMovement(STOP, 0.0);
 
                 if(!stRobotData.WaypointStack.empty())
                 {
                     SetTarget(stRobotData.WaypointStack.top());
+                    stRobotData.AddedPoint.Set(0,0);
+                    stRobotData.CollectiveCollinearChecked = false;
                     stRobotData.WaypointStack.pop();
-
+                    
                 }
-//                else
+                else if(stRobotData.GoingToOrFromNest == true and stRobotData.WaypointStack.empty())
+                {
+                   stRobotData.CollectiveCollinearChecked = false;
+                }
+            
+//                if(stRobotData.WaypointStack.empty() == true)
 //                {
-//                    PushMovement(STOP, 0.0);
+//                    stRobotData.WaypointCounter = 0;
+//                    stRobotData.AddWaypoint = false;
 //                }
             
                 stRobotData.Waypoint_Added = true;
                 stRobotData.pathcheck = false;
-//                stRobotData.Intial_TurningWaitTime = 0;
                 stRobotData.fLinearWheelSpeed = RobotForwardSpeed;
                 stRobotData.fBaseAngularWheelSpeed = RobotRotationSpeed;
         }
@@ -319,7 +334,7 @@ argos::Real BaseController::SetTargetAngleDistance(argos::Real newAngleToTurnInD
     // adjusting with + 0.02 m, or + 2 cm, increases accuracy...
   argos::Real TicksToWait;
   argos::Real s = 0.105 * newAngleToTurnInDegrees;
-  TicksToWait = std::ceil((SimulationTicksPerSecond() * s) / RobotRotationSpeed);
+  TicksToWait = std::ceil((SimulationTicksPerSecond() * s) / stRobotData.fBaseAngularWheelSpeed);
   return TicksToWait;
 }
 
@@ -327,7 +342,7 @@ argos::Real BaseController::SetTargetTravelDistance(argos::Real newTargetDistanc
     // convert meters into cm
     argos::Real TicksToWait;
     argos::Real d = newTargetDistance * 100.0;
-    TicksToWait = std::ceil((SimulationTicksPerSecond() * d) / RobotForwardSpeed);
+    TicksToWait = std::ceil((SimulationTicksPerSecond() * d) / stRobotData.fLinearWheelSpeed);
 //    TicksToWaitWhileMoving = std::ceil((SimulationTicksPerSecond() * d) / RobotForwardSpeed);
     return TicksToWait;
 }
@@ -344,34 +359,34 @@ void BaseController::SetLeftTurn(argos::Real newAngleToTurnInDegrees) {
     }
 }
 
-///*****************************************************************************/
-//void BaseController::SetSoftLeftTurn(argos::Real newAngleToTurnInDegrees)
-//{
-//    if(newAngleToTurnInDegrees > 0.0) {
-//        TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
-//        CurrentMovementState = SOFT_LEFT;
-//        
-//    } else if(newAngleToTurnInDegrees < 0.0) {
-//        TicksToWaitWhileMoving = SetTargetAngleDistance(-newAngleToTurnInDegrees);
-//        CurrentMovementState = SOFT_RIGHT;
-//    } else {
-//        Stop();
-//    }
-//}
-//
-//void BaseController::SetSoftRightTurn(argos::Real newAngleToTurnInDegrees) {
-//    if(newAngleToTurnInDegrees > 0.0) {
-//        TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
-//        CurrentMovementState = SOFT_RIGHT;
-//    } else if(newAngleToTurnInDegrees < 0.0) {
-//        TicksToWaitWhileMoving = SetTargetAngleDistance(-newAngleToTurnInDegrees);
-//        CurrentMovementState = SOFT_LEFT;
-//    } else {
-//        Stop();
-//    }
-//}
-//
-///*****************************************************************************/
+void BaseController::Set_SoftLeftTurn(argos::Real newAngleToTurnInDegrees) {
+  
+    if(newAngleToTurnInDegrees > 0.0) {
+        TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
+        CurrentMovementState = SOFT_LEFT;
+    } else if(newAngleToTurnInDegrees < 0.0) {
+        TicksToWaitWhileMoving = SetTargetAngleDistance(-newAngleToTurnInDegrees);
+        CurrentMovementState = SOFT_RIGHT;
+    } else {
+        Stop();
+    }
+}
+    
+void BaseController::Set_SoftRightTurn(argos::Real newAngleToTurnInDegrees)
+{
+    
+    if(newAngleToTurnInDegrees > 0.0) {
+        TicksToWaitWhileMoving = SetTargetAngleDistance(newAngleToTurnInDegrees);
+        CurrentMovementState = SOFT_RIGHT;
+    } else if(newAngleToTurnInDegrees < 0.0) {
+        TicksToWaitWhileMoving = SetTargetAngleDistance(-newAngleToTurnInDegrees);
+        CurrentMovementState = SOFT_LEFT;
+    } else {
+        Stop();
+    }
+}
+
+
 
 void BaseController::SetRightTurn(argos::Real newAngleToTurnInDegrees) {
     if(newAngleToTurnInDegrees > 0.0) {
@@ -414,6 +429,20 @@ void BaseController::PushMovement(size_t moveType, argos::Real moveSize) {
     MovementStack.push(newMove);
 }
 
+
+argos::Real BaseController::SetSoftTargetAngleDistance(argos::Real newAngleToTurnInDegrees) {
+    // s = arc_length = robot_radius * turning_angle
+    // NOTE: the footbot robot has a radius of 0.085 m... or 8.5 cm...
+    // adjusting with + 0.02 m, or + 2 cm, increases accuracy...
+    argos::Real TicksToWait;
+    argos::Real s = (0.105+0.14) * newAngleToTurnInDegrees;
+
+    TicksToWait = std::ceil((SimulationTicksPerSecond() * s) / fSpeed2);
+    
+    return TicksToWait;
+}
+
+
 void BaseController::PopMovement() {
     Movement nextMove = MovementStack.top();
 
@@ -447,6 +476,14 @@ void BaseController::PopMovement() {
             SetMoveBack(nextMove.magnitude);
             break;
         }
+        case SOFT_LEFT: {
+            Set_SoftLeftTurn(nextMove.magnitude);
+            break;
+        }
+        case SOFT_RIGHT: {
+            Set_SoftRightTurn(nextMove.magnitude);
+            break;
+        }
 
     }
 
@@ -454,59 +491,244 @@ void BaseController::PopMovement() {
 
 
 
-bool BaseController::CollisionDetection() {
+/* */
+argos::UInt8 BaseController::GetDirectionOfPoint(argos::CVector2 Point1, argos::CVector2 Point2, argos::CVector2 Point)
+{
+    argos::Real Cross_Product;
+    Direction ret_dir;
+    Point2.SetX(Point2.GetX() - Point1.GetX());
+    Point2.SetY(Point2.GetY() - Point1.GetY());
+    Point.SetX(Point.GetX() - Point1.GetX());
+    Point.SetY(Point.GetY() - Point1.GetY());
     
-    argos::CVector2 PositionCurr, NewTargetWayPoint;
-    argos:: CVector2 Nest_Position;
+    Cross_Product = Point2.GetX() * Point.GetY() - Point2.GetY() * Point.GetX();
+    
+    if(Cross_Product > 0)
+    {
+        ret_dir =  RIGHT_DIR;
+    }
+    else if(Cross_Product < 0)
+    {
+        ret_dir =  LEFT_DIR;
+    }
+    else{
+        ret_dir =  ZERO;
+    }
+    
+    return ret_dir;
+}
+
+/* Function to handle collision detection */
+bool BaseController::CollisionDetection()
+{
+    
+//    argos::CVector2 Perpendicular, CurrentVector;
+
+    argos::CVector2 CurrentVector_Copy, collisionvec_copy;
     argos:: Real Nest_Radius_Squared = 0.0625;
-    argos::Real x, y, diff;
+//    argos::Real dist, dist_waypt, DotProductVectors;
+    argos::Real dist, dist_waypt;
     argos::CRadians angle, angle_error;
+    argos::CRadians orientation;
+//    argos::UInt8 directioncollision;
 
-    argos::CVector2 collisionVector = GetCollisionVector();
-    argos::Real collisionAngle = ToDegrees(collisionVector.Angle()).GetValue();
-    bool isCollisionDetected = false;
-
+//    argos::CVector2 collisionVector = GetCollisionVector();
+    collisionVector = GetCollisionVector();
+//    argos::Real collisionAngle = ToDegrees(collisionVector.Angle()).GetValue();
     
-//    Nest_Position.Set(0,0);
+    collisionAngle = ToDegrees(collisionVector.Angle()).GetValue();
+    bool isCollisionDetected = false;
+    
+    dist = 0.0;
+    dist_waypt = 0.0f;
+    
+    // check if the collision vector is to the left or right of current vector
+
     if(GoStraightAngleRangeInDegrees.WithinMinBoundIncludedMaxBoundIncluded(collisionAngle)
-       && collisionVector.Length() > 0.0) {
-   
-       Stop();
-       isCollisionDetected = true;
-       collision_counter++;
-       while(MovementStack.size() > 0) MovementStack.pop();
+       && collisionVector.Length() > 0.0)
+    {
+
+        Stop();
+        isCollisionDetected = true;
+        orientation = GetHeading();
+        while(MovementStack.size() > 0) MovementStack.pop();
         
+        CurrentVector = (stRobotData.TargetWaypoint - stRobotData.StartWaypoint);
+        CurrentVectorAngle = ToDegrees(CurrentVector.Angle()).GetValue();
+        CurrentVector_Copy = CurrentVector;
+        collisionvec_copy = collisionVector;
+        Perpendicular = CurrentVector_Copy.Perpendicularize();
+        collisionVector_adj = collisionvec_copy.Rotate(orientation);
+        
+        /* if the dot product is  +ve-> 2 vectors in same direction
+         * else if dot product is -ve-> 2 vectors in opposite direction */
+        DotProductVectors = CurrentVector.DotProduct(collisionVector_adj);
+        
+        // in same direction, stop the robot that is ahead of the other colliding robot
+        if(DotProductVectors > 0.0f and AlgorithmActivated == true)
+        {
+            directioncollision = GetDirectionOfPoint(stRobotData.StartWaypoint, Perpendicular,  collisionVector_adj);
+            if(stRobotData.GoingToNest == true)
+            {
+                // when robot going to nest
+                //  if the collision vector is to the right of perpendicular, it is to the back of the current robot
+                // then add stop time to other robot
+                if(directioncollision == RIGHT_DIR)
+                {
+                    /* don't do anything */
+                }
+                // this robot is to the back, then add stop time
+                else if(directioncollision == LEFT_DIR)
+                {
+                    stRobotData.StopTurningTime += 50;
+                }
+                // same location
+                else
+                {
+                    collision_counter++;
+                    stRobotData.CollisionCounter++;
+                    PushMovement(FORWARD, SearchStepSize);
 
-       PushMovement(FORWARD, SearchStepSize);
+                    if(collisionAngle <= 0.0)
+                    {
+                        SetLeftTurn(37.5 - collisionAngle);
+                    }
+                    else
+                    {
+                        SetRightTurn(37.5 + collisionAngle);
+                    }
+                }
+            }
+            else if(stRobotData.GoingToNest == false and stRobotData.GoingToOrFromNest == true)
+            {
+                // when robot going away from nest
+                //  if the collision vector is to the left of perpendicular, it is to the back of the current robot
+                // then add stop time
+                if(directioncollision == LEFT_DIR)
+                {
+                    /* don't do anything */
+                }
+                // this robot is to the back, then add stop time
+                else if(directioncollision == RIGHT_DIR)
+                {
+                    stRobotData.StopTurningTime += 50;
+                }
+                else
+                {
+                    collision_counter++;
+                    stRobotData.CollisionCounter++;
+                    PushMovement(FORWARD, SearchStepSize);
 
-    if(collisionAngle <= 0.0)
-      {
-        //argos::LOG << collisionAngle << std::endl << collisionVector << std::endl << std::endl;
-            SetLeftTurn(37.5 - collisionAngle);
-      }
-    else
-      {
-        //argos::LOG << collisionAngle << std::endl << collisionVector << std::endl << std::endl;
-            SetRightTurn(37.5 + collisionAngle);
-      }
+                    if(collisionAngle <= 0.0)
+                    {
+                        SetLeftTurn(37.5 - collisionAngle);
+                    }
+                    else
+                    {
+                        SetRightTurn(37.5 + collisionAngle);
+                    }
+                }
+            }
+            // somewhere else
+            else
+            {
+                collision_counter++;
+                stRobotData.CollisionCounter++;
+                PushMovement(FORWARD, SearchStepSize);
+
+                if(collisionAngle <= 0.0)
+                {
+                    SetLeftTurn(37.5 - collisionAngle);
+                }
+                else
+                {
+                    SetRightTurn(37.5 + collisionAngle);
+                }
+            }
+
+        }
+        // implement the normal collision handling
+        else
+        {
+            collision_counter++;
+            stRobotData.CollisionCounter++;
+            PushMovement(FORWARD, SearchStepSize);
+            
+            if(collisionAngle <= 0.0)
+            {
+                SetLeftTurn(37.5 - collisionAngle);
+            }
+            else
+            {
+                SetRightTurn(37.5 + collisionAngle);
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+//        if(stRobotData.GoingToNest == true and AlgorithmActivated == true)
+//        {
+//            dist = (stRobotData.StartWaypoint - NestLocation).Length();
+//            // add stop time to the robot, if it is not at the nest
+//            if(dist >= (RadiusOfNest + 0.1))
+//            {
+//                stRobotData.StopTurningTime += 35;
+//            }
+//        }
+//        else if(stRobotData.GoingToOrFromNest == true and AlgorithmActivated == true)
+//        {
+//            // if way point added
+//            if(stRobotData.WaypointCounter > 0 and
+//               stRobotData.CollectiveCollinearChecked == true)
+//            {
+//                dist_waypt = (stRobotData.StartWaypoint - stRobotData.AddedPoint).Length();
+//
+//                // add stop time to the robot that is not at the waypoint
+//                if(dist_waypt >= 0.1)
+//                {
+//                    stRobotData.StopTurningTime += 35;
+//                }
+//
+//            }
+//        }
+//        else
+//        {
+        
+            
+//        }
+        
+       
 
     }
-    return isCollisionDetected;
+        return isCollisionDetected;
    
 }
 
 argos::CVector2 BaseController::GetCollisionVector() {
+    prox_size = 0;
     /* Get readings from proximity sensor */
     const argos::CCI_FootBotProximitySensor::TReadings& proximityReadings = proximitySensor->GetReadings();
 
     /* Sum them together */
     argos::CVector2 collisionVector;
+    
+    
 
     for(size_t i = 0; i < proximityReadings.size(); ++i) {
+        if(proximityReadings[i].Value != 0)
+        {
+            prox_size++;
+        }
         collisionVector += argos::CVector2(proximityReadings[i].Value, proximityReadings[i].Angle);
     }
 
     collisionVector /= proximityReadings.size();
+
 
     return collisionVector;
 }
@@ -514,6 +736,7 @@ argos::CVector2 BaseController::GetCollisionVector() {
 void BaseController::Stop() {
     SetTargetTravelDistance(0.0);
     SetTargetAngleDistance(0.0);
+    SetSoftTargetAngleDistance(0.0);
     TicksToWaitWhileMoving = 0.0;
     CurrentMovementState = STOP;
 }
@@ -539,64 +762,56 @@ void BaseController::ResetIntersectionData() {
 //
 }
 
-void BaseController::Move() {
+void BaseController::Move()
+{
 
-
-//    if(Wait() == true) return;
-    
-//    if(Initial_State == true and stRobotData.id_robot < (stRobotData.Total_robots - 1))
-//    {
-//        stRobotData.StopTurningTime = ((stRobotData.id_robot + 1) * 100);
-//        Initial_State = false;
-//    }
     
     if(CheckStopTime() == true) return;
     
     CollisionDetection();
 
     /* move based on the movement state flag */
-    switch(CurrentMovementState) {
+    switch(CurrentMovementState)
+    {
 
-        /* stop movement */
-        case STOP: {
-//            if((stRobotData.StopTurningTime > 0.0))
-//            {
-//                Stop();
-//                wheelActuator->SetLinearVelocity(0.0, 0.0);
-//                stRobotData.StopTurningTime--;
-//            }
-//            else{
-                wheelActuator->SetLinearVelocity(0.0, 0.0);
-                SetNextMovement();
-//            }
-            break;
-        }
+    /* stop movement */
+    case STOP:
+    {
+        wheelActuator->SetLinearVelocity(0.0, 0.0);
+        SetNextMovement();
+
+        break;
+    }
             
 
-        /* turn left until the robot is facing an angle inside of the TargetAngleTolerance */
-        case LEFT: {
-            if((TicksToWaitWhileMoving--) <= 0.0) {
-                Stop();
-            } else {
-	      //argos::LOG << "LEFT\n";
-                wheelActuator->SetLinearVelocity(-RobotRotationSpeed, RobotRotationSpeed);
-            }
-            break;
+    /* turn left until the robot is facing an angle inside of the TargetAngleTolerance */
+    case LEFT:
+    {
+        if((TicksToWaitWhileMoving--) <= 0.0)
+        {
+            Stop();
         }
+        else
+        {
+   
+            wheelActuator->SetLinearVelocity(-stRobotData.fBaseAngularWheelSpeed, stRobotData.fBaseAngularWheelSpeed);
+        }
+        break;
+    }
 
         /* turn right until the robot is facing an angle inside of the TargetAngleTolerance */
         case RIGHT: {
             if((TicksToWaitWhileMoving--) <= 0.0) {
                 Stop();
             } else {
-	      //argos::LOG << "RIGHT\n";
-                wheelActuator->SetLinearVelocity(RobotRotationSpeed, -RobotRotationSpeed);
+                wheelActuator->SetLinearVelocity(stRobotData.fBaseAngularWheelSpeed, -stRobotData.fBaseAngularWheelSpeed);
             }
             break;
         }
 
         /* move forward until the robot has traveled the specified distance */
-        case FORWARD: {
+        case FORWARD:
+        {
             if((TicksToWaitWhileMoving--) <= 0.0) {
                 Stop();
             } else {
@@ -619,27 +834,30 @@ void BaseController::Move() {
             break;
         }
             
-//        case SOFT_LEFT:
-//        {
-//            if((TicksToWaitWhileMoving--) <= 0.0) {
-//                Stop();
-//            }
-//            else {
-//
-//                Real fSpeedFactor = (90 - Abs(cHeadingAngle)) / 90;
-//                fSpeed1 = RobotRotationSpeed - RobotRotationSpeed * (1.0 - fSpeedFactor);
-//                fSpeed2 = RobotRotationSpeed + RobotRotationSpeed * (1.0 - fSpeedFactor);
-//
-//
-//                wheelActuator->SetLinearVelocity(fSpeed1,
-//                                                 fSpeed2);
-//            }
-//            break;
-//        }
-//        case SOFT_RIGHT:
-//        {
-//
-//        }
+        case SOFT_LEFT:
+        {
+            if((TicksToWaitWhileMoving--) <= 0.0) {
+                Stop();
+            }
+            else {
+
+                wheelActuator->SetLinearVelocity(0,
+                                                 stRobotData.fBaseAngularWheelSpeed);
+                
+            }
+            break;
+        }
+        case SOFT_RIGHT:
+        {
+            if((TicksToWaitWhileMoving--) <= 0.0) {
+                Stop();
+            } else {
+                //argos::LOG << "RIGHT\n";
+                wheelActuator->SetLinearVelocity(stRobotData.fBaseAngularWheelSpeed, 0);
+            
+            }
+            break;
+        }
     }
 }
 

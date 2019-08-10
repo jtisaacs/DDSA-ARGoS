@@ -7,6 +7,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
 #include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
 #include <argos3/core/simulator/loop_functions.h>
+//#include <source/DSA/DSA_loop_functions.h>
 #include <cmath>
 #include <stack>
 
@@ -28,6 +29,7 @@ class BaseController : public argos::CCI_Controller {
         void SetStartPosition(argos::CVector3 sp);
         argos::CVector3 GetStartPosition();
         size_t GetMovementState();
+        argos::UInt8 GetDirectionOfPoint(argos::CVector2 Point1, argos::CVector2 Point2, argos::CVector2 Point);
 
         void Stop();
         void Move();
@@ -47,16 +49,39 @@ class BaseController : public argos::CCI_Controller {
         argos::Real SimulationSecondsPerTick();
         argos::Real SimulationTimeInSeconds();
     
+    
+    
+    
     public:
 //        bool StopMovement;;
         // controller state variables
+        argos::Real fSpeed1;
+        argos::Real fSpeed2;
+    
+    argos::Real DotProductVectors;
+    argos::CVector2 Perpendicular, CurrentVector, collisionVector, collisionVector_adj;
+    argos::UInt8 directioncollision, prox_size;
+    argos::Real collisionAngle, CurrentVectorAngle;
+    
+        argos::CVector2 NestLocation;
+        argos::Real RadiusOfNest;
+        bool AlgorithmActivated;
+    
         enum MovementState {
             STOP    = 0,
             LEFT    = 1,
             RIGHT   = 2,
             FORWARD = 3,
-            BACK    = 4
+            BACK    = 4,
+            SOFT_LEFT = 5,
+            SOFT_RIGHT = 6
         } CurrentMovementState;
+    
+        enum Direction {
+            ZERO = 0,
+            RIGHT_DIR = 1,
+            LEFT_DIR = 2
+        } DirectionOfPoint;
     
         struct RobotData{
             argos::CVector2 TargetPosition;
@@ -84,6 +109,7 @@ class BaseController : public argos::CCI_Controller {
             bool AddWaypoint;
             bool pathcheck;
             bool WaypointStackpopped;
+            bool CollectiveCollinearChecked;
             argos::CRadians Orientation;
             argos::CDegrees HeadingAngle;
             std::stack<argos::CVector2>WaypointStack;
@@ -95,14 +121,22 @@ class BaseController : public argos::CCI_Controller {
 //            argos::CVector3 vect1;
 //            argos::CVector3 vect2;
             argos::CRadians Theta;
+            argos::Real CosTheta;
 //            argos::UInt8 Inter;
 //            argos::CVector2 PointChange;
 //            argos::CVector2 PointSafe;
             char direction;
             char prevdirection;
+            argos::UInt16 CollisionCounter;
+            bool CollinearAvoidance;
 //            argos::CRadians AngleTurn;
             std::vector<argos::UInt8>Neighbors;
+            argos::UInt8 QuadrantGroup;
             std::vector < std::vector<argos::UInt8> > NeighborsMatrix;
+            argos::UInt8 rows;
+            argos::UInt8 cols;
+            argos::Real distance;
+            argos::UInt8 PreviousCollinearRobotToNest;
 //            std::stack<argos::UInt16>CollinearRobots;
 //            std::stack<argos::UInt16>IntersectingRobots;
 //            argos::CMatrix <>NeighborMatrix;
@@ -133,6 +167,18 @@ class BaseController : public argos::CCI_Controller {
          */
         inline RobotData& GetRobotData() {
             return stRobotData;
+        }
+        inline void SetAlgorithmActivated(bool value)
+        {
+            AlgorithmActivated = value;
+        }
+        inline void SetNestPosition(argos::CVector2 Np)
+        {
+            NestLocation.Set(Np.GetX(), Np.GetY());
+        }
+        inline void SetNestRadius(argos::Real rad_val)
+        {
+            RadiusOfNest = rad_val;
         }
     
         /*
@@ -236,12 +282,14 @@ public:
         argos::Real SetTargetAngleDistance(argos::Real newAngleToTurnInDegrees);
         argos::Real SetTargetTravelDistance(argos::Real newTargetDistance);
         void SetLeftTurn(argos::Real newTargetAngle);
+        argos::Real SetSoftTargetAngleDistance(argos::Real newAngleToTurnInDegrees);
         void SetRightTurn(argos::Real newTargetAngle);
         void SetMoveForward(argos::Real newTargetDistance);
         void SetMoveBack(argos::Real newTargetDistance);
 //        void PushMovement(size_t moveType, argos::Real moveSize);
         void PopMovement();
-    
+        void Set_SoftLeftTurn(argos::Real newAngleToTurnInDegrees);
+        void Set_SoftRightTurn(argos::Real newAngleToTurnInDegrees);
 
         /* collision detection functions */
         bool CollisionDetection();

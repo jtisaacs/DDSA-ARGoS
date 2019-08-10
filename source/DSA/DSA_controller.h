@@ -36,7 +36,9 @@ class DSA_controller : public BaseController {
 		argos::Real SimTimeInSeconds();
         std::string  extractID(std::string str);
     
-    
+    public:
+    /* Robot DSA state variable */
+    enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3, START_SPIRAL = 4} DSA;
     private:
 
         size_t NumberOfRobots;
@@ -45,8 +47,8 @@ class DSA_controller : public BaseController {
         int StepsToActivate;
     
 
-        /* Robot DSA state variable */
-        enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3, START_SPIRAL = 4} DSA;
+//        /* Robot DSA state variable */
+//        enum DSA { SEARCHING = 1, RETURN_TO_NEST = 2, RETURN_TO_SEARCH = 3, START_SPIRAL = 4} DSA;
 
         /* robot internal variables & statistics */
         CRandom::CRNG*      RNG;

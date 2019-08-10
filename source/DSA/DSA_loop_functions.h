@@ -27,6 +27,8 @@ class DSA_loop_functions : public argos::CLoopFunctions {
 
 		/* Calculates the performance of the robot in a trial */
 		Real Score();
+    
+        void SetAverageCollision();
 	
 
         void SetFoodDistribution();
@@ -103,7 +105,15 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     
     argos::Real CheckDirection(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
     
-    argos::CVector2 CalculateWayPoint(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
+//    argos::CVector2 CalculateWayPoint(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
+    
+    argos::CVector2 CalculateWayPoint(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2, UInt8 turntype);
+    
+    void IntersectionHandling_ForRobotsGoingOutOfNest_Collinear(BaseController::RobotData *Robot1, BaseController:: RobotData *Robot2,
+                                                                                    std::vector<BaseController::IntersectionData> *stRobotIntersectionData1,
+                                                                std::vector<BaseController::IntersectionData> *stRobotIntersectionData2);
+    void QuadrantGroupType(std::vector<argos::UInt8>* ptr, argos::UInt8 size);
+//    argos::UInt8 QuadrantGroupType(std::vector<argos::UInt8>* ptr, argos::UInt8 size);
     
     void TestFunction();
     void GetNeighbors();
@@ -122,13 +132,16 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     void Avoid_Collision();
     bool ThreePointsCollinear(CVector2 Point1, CVector2 Point2, CVector2 Point3);
     
-    argos::CVector2 FindClosestAnchorPoint(BaseController::RobotData *ptr, BaseController::RobotData *Otherptr);
+    argos::CVector2 FindClosestAnchorPoint(BaseController::RobotData *ptr, BaseController::RobotData *Otherptr, bool AtNest);
     
     bool MatrixCollinearityIntersectionEquation(BaseController::RobotData *ptr, argos::UInt8 row_size, argos::UInt8 column_size);
     
     
-    void IntersectionHandlingForCollinearity(BaseController::RobotData *RobotDataptr, BaseController::RobotData *BaseRobotDataptr,
-                                             std::vector<BaseController::IntersectionData> *stRobotIntersectionData, argos::UInt8 CollinearRobotID);
+//    void IntersectionHandlingForCollinearity(BaseController::RobotData *RobotDataptr, BaseController::RobotData *BaseRobotDataptr,
+//                                             std::vector<BaseController::IntersectionData> *stRobotIntersectionData, argos::UInt8 CollinearRobotID);
+    
+    void IntersectionHandlingForCollinearity(BaseController::RobotData *RobotDataptr,
+                                                                 std::vector<BaseController::IntersectionData> *stRobotIntersectionData);
     
     void AvoidCollinearCollision(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2, BaseController::RobotData *BaseRobotptr,
                                                      std::vector<BaseController::IntersectionData> *ptr3, std::vector<BaseController::IntersectionData> *ptr4);
@@ -144,11 +157,45 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     
     void CheckCollisionAndConsistency();
     
-    public:
-        bool FirstCheck;
     
+    void IntersectionCheck_ForRobots_GoingOutOfNest(BaseController::RobotData *Robot1, BaseController:: RobotData *Robot2,
+                                                                        std::vector<BaseController::IntersectionData> *stRobotIntersectionData1,
+                                                                        std::vector<BaseController::IntersectionData> *stRobotIntersectionData2,
+                                                    argos::UInt8 index_1, argos::UInt8 index_2, BaseController::RobotData *Baseptr);
+    
+    bool WayPointCollinearityCheck(argos::CVector2 Pt1,argos::CVector2 Pt2 , argos::CVector2 Pt3, argos::CVector2 Pt4,
+                                                       BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
+    
+    argos::Real ShortestDistTwoSegments(argos::CVector2 Pt1, argos::CVector2 Pt2 , argos::CVector2 Pt3, argos::CVector2 Pt4);
+    argos::UInt8 DecideLeftOrRight(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2, argos::Real direction);
+    
+    void CalculatePointsAlongCircle(argos::CVector2 *Array, BaseController::RobotData *ptr, argos::Real radius, bool CentreNest);
+    void CollectiveCollinearCheck();
+    void SortforLeftMostRobot(std::vector<argos::UInt8>* ptr, argos::UInt8 size);
+    void GetNeighbor_ThisRobot(BaseController::RobotData *ptr);
+    
+    void CollinearPathPlanning(BaseController::RobotData *stRobotDataThis);
+    argos::UInt8 FindRobotGoingToWayPt(std::vector<argos::UInt8>* ptr, argos::UInt8 size);
+    bool Check_CollinearVectors(argos::CVector2 Vec1, argos::CVector2 Vec2, argos::CVector2 Vec3, argos::CVector2 Vec4);
+    
+    void SortRobotForward(std::vector<argos::UInt8>* ptr, argos::UInt8 size, argos::UInt8 ToNestDirection);
+//    argos::Real CheckDirection(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
+    
+//    argos::CVector2 CalculateWayPoint(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
+    
+    
+//    argos::CVector2 CalculatePointAtDistanceAlongVectorDirection(argos::CVector2 Point1, argos::CVector2 Point2, argos::Real Distance);
+    
+    public:
+        bool RobotWithWaypt;
+        argos::UInt8 GoingAwayNestLeft, WaypointType;
+        bool FirstCheck;
+        argos::UInt8 RobotId;
+        argos::UInt8 LeftMostRobotID;
+        argos::Real Average_Collision_Avoidance;
         argos::CRandom::CRNG* m_pcRNG;
         argos::UInt16 SimulatorTicksperSec;
+        argos::Real distance;
 //        argos::UInt16 stoptime1;
 //        argos::UInt16 stoptime2;
 //        argos::UInt16 TimeTaken;
@@ -160,36 +207,43 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         enum COLLISIONDATA {CONSISTENT = 0, COLLINEAR = 1, INTERSECTION1 = 2,
                             INTERSECTION2 = 3, COLLINEAR_INTERSECTION = 4} COLLISION_TYPE;
     
-    argos::CVector2 First_QuadrantAnchorPoint;
-    argos::CVector2 Second_QuadrantAnchorPoint;
-    argos::CVector2 Third_QuadrantAnchorPoint;
-    argos::CVector2 Fourth_QuadrantAnchorPoint;
+        argos::CVector2 First_QuadrantAnchorPoint;
+        argos::CVector2 Second_QuadrantAnchorPoint;
+        argos::CVector2 Third_QuadrantAnchorPoint;
+        argos::CVector2 Fourth_QuadrantAnchorPoint;
     
-    argos::Real AnchorDistance;
-    argos::UInt16 RobotResourceSize;
-    argos::CVector2 IntersectionPointLF;
-    argos::UInt16 IntersectionLoopValue;
-    argos::UInt8 IntersectionStructIndex;
-    argos::UInt8 TestVariable;
-    argos::UInt8 TestValue;
-    argos::CVector2 TestPoint;
-    argos::Real AnchorRadius = 0.54;
-    argos::Real DiagonalAnchorPointX = AnchorRadius * argos::Cos(ToRadians(argos::CDegrees(45.0f)));
-    argos::Real DiagonalAnchorPointY = AnchorRadius * argos::Sin(ToRadians(argos::CDegrees(45.0f)));
+        argos::Real AnchorDistance;
+        argos::UInt16 RobotResourceSize;
+        argos::CVector2 IntersectionPointLF;
+        argos::UInt16 IntersectionLoopValue;
+        argos::UInt8 IntersectionStructIndex;
+        argos::UInt8 TestVariable;
+        argos::UInt8 TestValue;
+        argos::CVector2 TestPoint;
+        argos::Real AnchorRadius = 0.54;
+        argos::Real DiagonalAnchorPointX = AnchorRadius * argos::Cos(ToRadians(argos::CDegrees(45.0f)));
+        argos::Real DiagonalAnchorPointY = AnchorRadius * argos::Sin(ToRadians(argos::CDegrees(45.0f)));
     
-    argos::CVector2 AnchorPoints[8] = {{0, AnchorRadius}, {AnchorRadius, 0}, {-AnchorRadius, 0}, {0, -AnchorRadius},
-                                       {DiagonalAnchorPointX, DiagonalAnchorPointY}, {-DiagonalAnchorPointX, -DiagonalAnchorPointY},
-                                       {-DiagonalAnchorPointX, DiagonalAnchorPointY}, {DiagonalAnchorPointX, -DiagonalAnchorPointY}};
+    //    argos::CVector2 AnchorPoints[8] = {{0, AnchorRadius}, {AnchorRadius, 0}, {-AnchorRadius, 0}, {0, -AnchorRadius},
+    //                                       {DiagonalAnchorPointX, DiagonalAnchorPointY}, {-DiagonalAnchorPointX, -DiagonalAnchorPointY},
+    //                                       {-DiagonalAnchorPointX, DiagonalAnchorPointY}, {DiagonalAnchorPointX, -DiagonalAnchorPointY}};
     
-//    argos::CVector2 AnchorPoints[8] = {{0, 0.54}, {0.54, 0}, {-0.54, 0}, {0, -0.54}, {0.3818, 0.3818}, {-0.3818, -0.3818}, {-0.3818, 0.3818},
-//                                    {0.3818, -0.3818}};
+        argos::CVector2 AnchorPointsHalfPos[5] =  {{AnchorRadius, 0}, {DiagonalAnchorPointX, DiagonalAnchorPointY}, {0, AnchorRadius},
+                                                    {-DiagonalAnchorPointX, DiagonalAnchorPointY}, {0, -AnchorRadius}};
+
+        argos::CVector2 AnchorPointsHalfNeg[5] =  {{AnchorRadius, 0}, {DiagonalAnchorPointX, -DiagonalAnchorPointY}, {0, -AnchorRadius},
+                                                    {-DiagonalAnchorPointX, -DiagonalAnchorPointY}, {0, -AnchorRadius}};
+    
+    //    argos::CVector2 AnchorPoints[8] = {{0, 0.54}, {0.54, 0}, {-0.54, 0}, {0, -0.54}, {0.3818, 0.3818}, {-0.3818, -0.3818}, {-0.3818, 0.3818},
+    //                                    {0.3818, -0.3818}};
     
 	protected:
 
 	void setScore(double s);
 
         argos::CRandom::CRNG* RNG;
-
+        bool algoactivated;
+        bool speedcheck_flag;
         size_t sim_time;
         size_t ticks_per_second;
         size_t MaxSimTime;
@@ -262,14 +316,20 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         bool RobotReachedWayPoint;
         bool NewWayPointAdded;
         char direction_last;
+//        argos::Real MaxLinearSpeed;
         string file_path;
         string file_name;
         string full_path;
-        const argos::Real CollinearGap = 0.3;
+        argos::Real MaxLinearSpeed;
+        const argos::UInt16 WayPointMaxCount = 1;
+        const argos::Real CollinearGap = 0.2;
         const argos::Real Safedistance = 0.5;
+//        const argos::Real CollinearDistanceGap = 0.32;
+        const argos::Real CollinearDistanceGap = 0.18;
+
         const argos::Real Searcher_Gap = 0.18;
-        const argos::Real MaxLinearSpeed = 16.0f;
-        const argos::Real MinLinearSpeed = 12;
+//        const argos::Real MaxLinearSpeed = 6.0f;
+        const argos::Real MinLinearSpeed = 4.0f;
         const argos::Real Robot_Gap_Distance = 0.2f;
         const argos::UInt16 MaximumWaypoint = 5;
         const argos::Real OverlappingCourseAngle = 20.0f;
@@ -279,6 +339,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         argos::UInt16 count_start;
         argos::UInt16 count_end;
         argos::UInt16 next_id;
+    
     
 
 };

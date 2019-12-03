@@ -73,9 +73,7 @@ class BaseController : public argos::CCI_Controller {
             LEFT    = 1,
             RIGHT   = 2,
             FORWARD = 3,
-            BACK    = 4,
-            SOFT_LEFT = 5,
-            SOFT_RIGHT = 6
+            BACK    = 4
         } CurrentMovementState;
     
         enum Direction {
@@ -91,21 +89,18 @@ class BaseController : public argos::CCI_Controller {
             argos::CVector2 StartWaypoint;
             argos::CVector2 AddedPoint;
             argos::UInt16 id_robot;
-//            argos::UInt16 Total_robots;
-//            argos::Real Priority;
             argos::UInt16 WaypointCounter;
             argos::Real fBaseAngularWheelSpeed;
             argos::Real fLinearWheelSpeed;
             bool GoingToNest;
             bool GoingToOrFromNest;
-//            bool MovementStarted;
+
             bool StopMovement;
-//            argos::CVector2 NormailzedVector;
-//            argos::UInt16 Intial_TurningWaitTime;
+
             argos::UInt16 StopTurningTime;
             bool Checked;
             bool Waypoint_Added;
-//            bool Intersection_Adjustment;
+
             bool CollinearFlag;
             bool AddWaypoint;
             bool pathcheck;
@@ -138,12 +133,7 @@ class BaseController : public argos::CCI_Controller {
             
         };
     
-//    struct IntersectionData{
-//        argos::UInt16 Robot_ID_Intersectingwith;
-//        bool Intersection_flag;
-//        argos::Real IntersectionDistance;
-//        argos::CVector2 IntersectionPoint;
-//    };
+
         struct IntersectionData{
             argos::UInt16 Robot_ID_Intersectingwith;
             argos::UInt8 Intersection_flag;
@@ -176,17 +166,6 @@ class BaseController : public argos::CCI_Controller {
             RadiusOfNest = rad_val;
         }
     
-        /*
-         * Returns the intersection data of the robot
-         */
-//        inline IntersectionData& GetIntersectionData() {
-//            return st_IntersectionData;
-//        }
-
-//        inline  std::vector<IntersectionData>& GetIntersectionData() {
-//            return IntersectionDataVector;
-//        }
-    
             inline  std::vector<IntersectionData>* GetIntersectionData() {
                 return &IntersectionDataVector;
             }
@@ -195,9 +174,7 @@ class BaseController : public argos::CCI_Controller {
 
         bool IsAtTarget();
     
-//        inline void ActivatePathPlanning(){
-//            path_planning_activated = true;
-//        }
+
     void SetMovementState(size_t state);
     
 public:
@@ -215,8 +192,6 @@ public:
 
     std::stack<Movement> MovementStack;
     
-//    IntersectionData st_IntersectionData;
-//    argos::Real RobotForwardSpeed;
     size_t WaitTime;
 
     
@@ -252,16 +227,7 @@ public:
 
     
 
-/* movement definition variables */
-//    struct Movement {
-//        size_t type;
-//        argos::Real magnitude;
-//    };
-//
-//    Movement previous_movement;
-//    argos::CVector2 previous_pattern_position;
-	
-//    std::stack<Movement> MovementStack;
+
 
     private:
 
@@ -269,7 +235,6 @@ public:
         argos::CVector3 StartPosition;
         argos::CVector2 TargetPosition;
 
-                //MovementState CurrentMovementState;
         
 
         /* private navigation helper functions */
@@ -277,20 +242,18 @@ public:
         argos::Real SetTargetAngleDistance(argos::Real newAngleToTurnInDegrees);
         argos::Real SetTargetTravelDistance(argos::Real newTargetDistance);
         void SetLeftTurn(argos::Real newTargetAngle);
-        argos::Real SetSoftTargetAngleDistance(argos::Real newAngleToTurnInDegrees);
+        
         void SetRightTurn(argos::Real newTargetAngle);
         void SetMoveForward(argos::Real newTargetDistance);
         void SetMoveBack(argos::Real newTargetDistance);
-//        void PushMovement(size_t moveType, argos::Real moveSize);
+
         void PopMovement();
-        void Set_SoftLeftTurn(argos::Real newAngleToTurnInDegrees);
-        void Set_SoftRightTurn(argos::Real newAngleToTurnInDegrees);
+
 
         /* collision detection functions */
         bool CollisionDetection();
         argos::CVector2 GetCollisionVector();
 
-        argos::UInt16 GetInitial_TurningWaitTime(BaseController::RobotData stRobotData);
 
 	bool heading_to_nest;
     bool Initial_State;

@@ -53,9 +53,13 @@ void DSA_loop_functions::Init(TConfigurationNode& node)
     argos::GetNodeAttribute(DDSA_node, "FoodBoundsHeight",                 FoodBoundsHeight);
     argos::GetNodeAttribute(DDSA_node, "NeighborRadius",      Neighbor_Radius);
     argos::GetNodeAttribute(DDSA_node, "ResultsPath",      file_path);
-
+    argos::GetNodeAttribute(DDSA_node, "ClusterCenter",      ClusterPos);
+    argos::GetNodeAttribute(DDSA_node, "RotationAngle",      Rotation_Angle);
+    argos::GetNodeAttribute(DDSA_node, "WaypointDist",      WaypointDistance);
     
-
+    TargetRayList.clear();
+    TargetRayColorList.clear();
+    
     NestRadiusSquared = NestRadius*NestRadius;
     
     // Initialization of AnchorPoints for collinear path collision avoidance
@@ -71,6 +75,9 @@ void DSA_loop_functions::Init(TConfigurationNode& node)
     argos::Real rangeY1 = (ArenaSize.GetY() / 2.0) - 0.085;
     ForageRangeX_1.Set(-rangeX1, rangeX1);
     ForageRangeY_1.Set(-rangeY1, rangeY1);
+    
+    /* arena distance */
+    MaxArenaDistance = sqrt(rangeX1 * rangeX1  + rangeY1 *rangeY1);
   
     argos::Real rangeX = FoodBoundsWidth/2.0;//(ArenaSize.GetX() / 2.0) - 0.085;
     argos::Real rangeY = FoodBoundsHeight/2.0;//(ArenaSize.GetY() / 2.0) - 0.085;  
@@ -107,7 +114,10 @@ void DSA_loop_functions::Init(TConfigurationNode& node)
             speedcheck_flag = true;
         }
     }
-    
+    if(CLUSTERCONFIGONLY == true)
+    {
+        FoodItemCount = 64;
+    }
 	SetFoodDistribution();
    
     RobotReachedWayPoint = 0;
@@ -122,24 +132,19 @@ void DSA_loop_functions::Init(TConfigurationNode& node)
     struct tm * now = localtime( & t );
     stringstream ss;
     
-//    ss << "DSA-"<<GIT_BRANCH<<"-"<<GIT_COMMIT_HASH<<"-"
-//    << (now->tm_year) << '-'
-//    << (now->tm_mon + 1) << '-'
-//    <<  now->tm_mday << '-'
-//    <<  now->tm_hour << '-'
-//    <<  now->tm_min << '-'
-//    <<  now->tm_sec << ".csv";
-    ss <<"DSA-LogFile-"<<now->tm_min << '-'
-    <<  now->tm_sec <<".csv";
+
     
-    file_name = ss.str();
-    full_path = file_path+"/"+file_name;
-    
-    ofstream results_output_stream;
-    results_output_stream.open(full_path, ios::app);
-    results_output_stream <<"Random Seed, " <<"Number_Of_Robots, "<<"Simulator_Clock, "
-    << "Number_Of_Targets, "<<"Neighbor_Radius, "<<"Average_Collision_Avoidance "<<endl;
-    results_output_stream.close();
+//    ss <<"DSA-LogFile-"<<now->tm_min << '-'
+//    <<  now->tm_sec <<".csv";
+//
+//    file_name = ss.str();
+//    full_path = file_path+"/"+file_name;
+//
+//    ofstream results_output_stream;
+//    results_output_stream.open(full_path, ios::app);
+//    results_output_stream <<"Random Seed, " <<"Number_Of_Robots, "<<"Simulator_Clock, "
+//    << "Number_Of_Targets, "<<"Neighbor_Radius, "<<"Average_Collision_Avoidance "<<endl;
+//    results_output_stream.close();
     
 }
 
@@ -155,12 +160,12 @@ void DSA_loop_functions::setScore(double s)
     score = s;
     SetAverageCollision();
     
-    ofstream results_output_stream;
-    results_output_stream.open(full_path, ios::app);
-    results_output_stream<< Random_Seed << "," <<TotalRobots << ", "
-    << getSimTimeInSeconds() << ", "
-    << score << "," << Neighbor_Radius << ","<< Average_Collision_Avoidance <<endl;
-    results_output_stream.close();
+//    ofstream results_output_stream;
+//    results_output_stream.open(full_path, ios::app);
+//    results_output_stream<< Random_Seed << "," <<TotalRobots << ", "
+//    << getSimTimeInSeconds() << ", "
+//    << score << "," << Neighbor_Radius << ","<< Average_Collision_Avoidance <<endl;
+//    results_output_stream.close();
     
   if (score >= FoodItemCount)
     {
@@ -172,6 +177,7 @@ void DSA_loop_functions::setScore(double s)
 void DSA_loop_functions::SetAverageCollision()
 {
     argos::Real TotalNumberOfCollisions = 0.0;
+    Average_Collision_Avoidance = 0;
     
     argos::CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
     for(CSpace::TMapPerType::iterator it5 = m_cFootbots.begin();
@@ -195,16 +201,18 @@ void DSA_loop_functions::SetAverageCollision()
 
 void DSA_loop_functions::PostExperiment() 
 {
-  if (PrintFinalScore == 1) printf("%f, %f\n", getSimTimeInSeconds(), score);
+  
     
     SetAverageCollision();
     
-    ofstream results_output_stream;
-    results_output_stream.open(full_path, ios::app);
-    results_output_stream<< Random_Seed << "," <<TotalRobots << ","
-    << getSimTimeInSeconds() << ","
-    << score << "," << Neighbor_Radius << "," << Average_Collision_Avoidance <<endl;
-    results_output_stream.close();
+    if (PrintFinalScore == 1) printf("%d, %f, %f, %f\n", TotalRobots, getSimTimeInSeconds(), score, Average_Collision_Avoidance);
+    
+//    ofstream results_output_stream;
+//    results_output_stream.open(full_path, ios::app);
+//    results_output_stream<< Random_Seed << "," <<TotalRobots << ","
+//    << getSimTimeInSeconds() << ","
+//    << score << "," << Neighbor_Radius << "," << Average_Collision_Avoidance <<endl;
+//    results_output_stream.close();
 }
 
 
@@ -307,6 +315,11 @@ void DSA_loop_functions::PreStep()
 //            CheckCollisionWithNeighbors(true);
             
             CollectiveCollinearCheck();
+            
+//            if(CLUSTERCONFIGONLY == true)
+//            {
+//                ClusterModeOperation();
+//            }
 
             /* implement collision avoidance algorithm */
 //            Avoid_Collision();
@@ -318,270 +331,7 @@ void DSA_loop_functions::PreStep()
         /* set the flags to indicate that collision checks have been completed */
         CheckComplete();
         
-//        BaseController::RobotData *stRobotDataCurrent = NULL;
-//        BaseController::RobotData *stRobotDataNeighbor = NULL;
-        
-        //Stop all the robots
-//        for(CSpace::TMapPerType::iterator it4 = m_cFootbots.begin();
-//            it4 != m_cFootbots.end();
-//            ++it4)
-//        {
-//            /* Get handle to foot-bot entity and controller of the current robot */
-//            CFootBotEntity& cFootBot4 = *any_cast<CFootBotEntity*>(it4->second);
-//            BaseController& cController4 = dynamic_cast<BaseController&>(cFootBot4.GetControllableEntity().GetController());
-//
-//            cController4.SetHardStopMovement();
-////            cController4.SetStopMovement();
-//
-//        }
-        
-        //find neighbors of every robot and collinear and intersecting robots
-//        for(CSpace::TMapPerType::iterator iterator1 = m_cFootbots.begin(); iterator1 != m_cFootbots.end(); ++iterator1)
-//        {
-//
-//            /* Get handle to foot-bot entity and controller of the current robot */
-//            CFootBotEntity& cFootBotCurrent = *any_cast<CFootBotEntity*>(iterator1->second);
-//            BaseController& cControllerCurrent = dynamic_cast<BaseController&>(cFootBotCurrent.GetControllableEntity().GetController());
-//            stRobotDataCurrent = &cControllerCurrent.GetRobotData();
-//            stRobotDataCurrent->StartWaypoint = cControllerCurrent.GetPosition();
-//
-//            for(CSpace::TMapPerType::iterator iterator2 = m_cFootbots.begin(); iterator2 != m_cFootbots.end(); ++iterator2)
-//            {
-//
-//                /* Get handle to foot-bot entity and controller of the current robot */
-//                CFootBotEntity& cFootBotNeighbors = *any_cast<CFootBotEntity*>(iterator2->second);
-//                BaseController& cControllerNeighbor = dynamic_cast<BaseController&>(cFootBotNeighbors.GetControllableEntity().GetController());
-//                stRobotDataNeighbor = &cControllerNeighbor.GetRobotData();
-//
-//                //avoid comparing the robot to itself
-//                if(stRobotDataNeighbor->id_robot != stRobotDataCurrent->id_robot)
-//                {
-//                    stRobotDataNeighbor->StartWaypoint = cControllerNeighbor.GetPosition();
-//
-//                    DistanceBetweenRobots = CalculateDistance(stRobotDataCurrent->StartWaypoint, stRobotDataNeighbor->StartWaypoint);
-//                    // if the distance between two robots is less than the user configured
-//                    if(DistanceBetweenRobots < Neighbor_Radius)
-//                    {
-//                        stRobotDataCurrent->Neighbors.push(stRobotDataNeighbor->id_robot);
-//                        stRobotDataNeighbor->Neighbors.push(stRobotDataCurrent->id_robot);
-//                    }
-//                }
-//
-//            }
-//
-//        }
-        
-//        for(CSpace::TMapPerType::iterator it4 = m_cFootbots.begin();
-//            it4 != m_cFootbots.end();
-//            ++it4)
-//        {
-//            /* Get handle to foot-bot entity and controller of the current robot */
-//            CFootBotEntity& cFootBot4 = *any_cast<CFootBotEntity*>(it4->second);
-//            BaseController& cController4 = dynamic_cast<BaseController&>(cFootBot4.GetControllableEntity().GetController());
-//
-//            cController4.SetHardStopMovement();
-//            cController4.SetStopMovement();
-//
-//        }
-        
-        /* Get the hadndle to each robot */
-//
-//        for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
-//            it != std::prev(m_cFootbots.end());
-//            ++it)
-//
-//        {
-//
-//            /* Get handle to foot-bot entity and controller of the current robot */
-//            CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
-//            BaseController& cController = dynamic_cast<BaseController&>(cFootBot.GetControllableEntity().GetController());
-//
-//
-//            sRobotDataprevious = &cController.GetRobotData();
-//
-//            /* Get the hadndle to each next robot */
-//            for(CSpace::TMapPerType::iterator it1 = std::next(it, 1);
-//                it1 != m_cFootbots.end();
-//                ++it1)
-//
-//            {
-//
-//                CFootBotEntity& cFootBot1 = *any_cast<CFootBotEntity*>(it1->second);
-//                BaseController& cController1 = dynamic_cast<BaseController&>(cFootBot1.GetControllableEntity().GetController());
-//
-//
-//                sRobotDatanext = &cController1.GetRobotData();
-//                sIntersectionDataNextRobot = &cController1.GetIntersectionData();
-//
-//                //                cController.SetHardStopMovement();
-//                //                cController1.SetHardStopMovement();
-//
-//                sRobotDataprevious->StartWaypoint = cController.GetPosition();
-//                sRobotDatanext->StartWaypoint = cController1.GetPosition();
-//
-//                // Reset the collinearity flag
-//                sRobotDataprevious->CollinearFlag = false;
-//                sRobotDatanext->CollinearFlag = false;
-//
-//                DistanceRobots = CalculateDistance(sRobotDataprevious->StartWaypoint, sRobotDatanext->StartWaypoint);
-//
-//                // check if two robots are neighbors
-//                if(DistanceRobots < Neighbor_Radius)
-//                {
-//                    if(sRobotDatanext->WaypointStackpopped == false)
-//                    {
-//                        /* check if robot's end waypoint is collinear in other robot's start and end waypoint */
-//                        CheckCollinearity(sRobotDataprevious, sRobotDatanext);
-//
-//                        if(sRobotDataprevious->CollinearFlag == true and !sRobotDatanext->WaypointStack.empty())
-//                        {
-//                            sRobotDatanext->AddedPoint = sRobotDatanext->WaypointStack.top();
-//
-//                            cController1.SetTarget(sRobotDatanext->AddedPoint);
-//                            sRobotDatanext->WaypointStackpopped = true;
-//                            sRobotDatanext->TargetWaypoint = sRobotDatanext->AddedPoint;
-//                            //                            cController.SetHardStopMovement();
-//                            cController1.SetHardStopMovement();
-//                            sRobotDatanext->WaypointStack.pop();
-//
-//
-//                        }
-//                    }
-//
-//                    if(sRobotDataprevious->CollinearFlag != true)
-//                    {
-//
-//                        //                            cController.SetHardStopMovement();
-//                        //                            cController1.SetHardStopMovement();
-//                        //
-//                        sRobotDataprevious->StartWaypoint = cController.GetPosition();
-//                        sRobotDatanext->StartWaypoint = cController1.GetPosition();
-//
-//                        if((sRobotDataprevious->WaypointStackpopped == true or sRobotDataprevious->GoingToOrFromNest == true)
-//                           and (sRobotDatanext->GoingToOrFromNest == false))
-//                        {
-//
-//
-//                            GetPointAtSafeDistance(sRobotDatanext);
-//
-//
-//                            Find_Intersection(sRobotDataprevious->StartWaypoint, sRobotDataprevious->TargetWaypoint,
-//                                              sRobotDatanext->StartWaypoint, sRobotDatanext->IntersectionPt1,sIntersectionDataNextRobot);
-//
-//                            if(sIntersectionDataNextRobot->Intersection_flag == true)
-//                            {
-//                                sIntersectionDataNextRobot->Robot_ID_Intersectingwith = sRobotDataprevious->id_robot;
-//                                sRobotDatanext->Inter = 1;
-//
-//                                IntersectionCollisionCheck(sRobotDataprevious->StartWaypoint,
-//                                                           sRobotDatanext->StartWaypoint,sRobotDataprevious,
-//                                                           sRobotDatanext,sIntersectionDataNextRobot,1);
-//
-//                            }
-//                            else
-//                            {
-//
-//                                Find_Intersection(sRobotDataprevious->StartWaypoint, sRobotDataprevious->TargetWaypoint,
-//                                                  sRobotDatanext->IntersectionPt1,
-//                                                  sRobotDatanext->IntersectionPt2,sIntersectionDataNextRobot);
-//
-//                                if(sIntersectionDataNextRobot->Intersection_flag == true)
-//                                {
-//                                    sIntersectionDataNextRobot->Robot_ID_Intersectingwith = sRobotDataprevious->id_robot;
-//                                    sRobotDatanext->Inter = 2;
-//
-//                                    IntersectionCollisionCheck(sRobotDataprevious->StartWaypoint, sRobotDatanext->IntersectionPt1,          sRobotDataprevious, sRobotDatanext,sIntersectionDataNextRobot,2);
-//                                }
-//                            }
-//
-//
-//                        }
-//                        else if((sRobotDatanext->WaypointStackpopped == true or sRobotDatanext->GoingToOrFromNest == true)
-//                                and(sRobotDataprevious->GoingToOrFromNest == false))
-//                        {
-//
-//
-//                            GetPointAtSafeDistance(sRobotDataprevious);
-//
-//                            Find_Intersection(sRobotDatanext->StartWaypoint,sRobotDatanext->TargetWaypoint,
-//                                              sRobotDataprevious->StartWaypoint, sRobotDataprevious->IntersectionPt1, sIntersectionDataNextRobot);
-//
-//                            if(sIntersectionDataNextRobot->Intersection_flag == true)
-//                            {
-//                                sIntersectionDataNextRobot->Robot_ID_Intersectingwith = sRobotDataprevious->id_robot;
-//                                sRobotDatanext->Inter = 3;
-//
-//                                IntersectionCollisionCheck(sRobotDatanext->StartWaypoint, sRobotDataprevious->StartWaypoint,
-//                                                           sRobotDatanext, sRobotDataprevious,sIntersectionDataNextRobot,1);
-//
-//                            }
-//                            else
-//                            {
-//                                Find_Intersection(sRobotDatanext->StartWaypoint,sRobotDatanext->TargetWaypoint,
-//                                                  sRobotDataprevious->IntersectionPt1, sRobotDataprevious->IntersectionPt2, sIntersectionDataNextRobot);
-//
-//                                if(sIntersectionDataNextRobot->Intersection_flag == true)
-//                                {
-//                                    sIntersectionDataNextRobot->Robot_ID_Intersectingwith = sRobotDataprevious->id_robot;
-//                                    sRobotDatanext->Inter = 4;
-//
-//                                    IntersectionCollisionCheck(sRobotDatanext->StartWaypoint, sRobotDataprevious->IntersectionPt1,
-//                                                               sRobotDatanext, sRobotDataprevious, sIntersectionDataNextRobot,2);
-//
-//                                }
-//                            }
-//
-//                        }
-//                        //                        both are coming, going or one is going towards nest and other is coming back from nest
-////                            else if((sRobotDatanext->WaypointStackpopped == true and sRobotDataprevious->GoingToOrFromNest == true) or
-////                                    (sRobotDataprevious->WaypointStackpopped == true and sRobotDatanext->GoingToOrFromNest == true))
-////                            {
-////                                Find_Intersection(sRobotDatanext->StartWaypoint,sRobotDatanext->TargetWaypoint,
-////                                                  sRobotDataprevious->StartWaypoint, sRobotDataprevious->TargetWaypoint, sIntersectionDataNextRobot);
-////
-////                                if(sIntersectionDataNextRobot->Intersection_flag == true)
-////                                {
-////                                    sIntersectionDataNextRobot->Robot_ID_Intersectingwith = sRobotDataprevious->id_robot;
-////                                    sRobotDatanext->Inter = 5;
-////                                    IntersectionCollisionCheck(sRobotDatanext->StartWaypoint, sRobotDataprevious->StartWaypoint,
-////                                                               sRobotDatanext, sRobotDataprevious, sIntersectionDataNextRobot,1);
-////                                }
-////
-////
-////                            }
-////
-//                        }// end of intersection check
-//
-//                    }//end of if distance check
-//
-//            } /* end of inner for loop */
-////            sRobotDataprevious->WaypointStackpopped =  false;
-////            sRobotDatanext->WaypointStackpopped =  false;
-//        } /* end of outer for loop */
-        
-//        for(CSpace::TMapPerType::iterator it5 = m_cFootbots.begin();
-//            it5 != m_cFootbots.end();
-//            ++it5)
-//        {
-//            BaseController::RobotData* stRobotData_1 = NULL;
-//            BaseController::IntersectionData *sIntersectionData_1 = NULL;
-//            /* Get handle to foot-bot entity and controller of the current robot */
-//            CFootBotEntity& cFootBot5 = *any_cast<CFootBotEntity*>(it5->second);
-//            BaseController& cController5 = dynamic_cast<BaseController&>(cFootBot5.GetControllableEntity().GetController());
-//
-//            stRobotData_1 = &cController5.GetRobotData();
-//            sIntersectionData_1 =&cController5.GetIntersectionData();
-//
-//            stRobotData_1->pathcheck = true;
-//            stRobotData_1->WaypointStackpopped =  false;
-//            stRobotData_1->CollinearFlag =  false;
-//            sIntersectionData_1->Intersection_flag = false;
-//
-////            cController5.SetStopMovement();
-//            cController5.SetMovement();
-//        }
-
-        
+ 
     }
     
     sim_time++;
@@ -652,12 +402,19 @@ void DSA_loop_functions::ClusterFoodDistribution() {
     argos::CVector2 placementPosition;
     
     //apurva
-    argos::CVector2 placementPositionArr[1] = {{0, -2}};
-    ClusterLengthY = 8;
-    ClusterWidthX = 8;
+//    argos::CVector2 placementPositionArr[1] = {{-2, -1}};
     
-//apurva
-//    FindClusterLengthWidth();//Wayne: sets cluster sides (X,Y)
+    if(CLUSTERCONFIGONLY == true)
+    {
+        ClusterLengthY = 8;
+        ClusterWidthX = 8;
+    }
+    
+    //apurva
+    if(CLUSTERCONFIGONLY == false)
+    {
+        FindClusterLengthWidth();//Wayne: sets cluster sides (X,Y)
+    }
 
     //-----Wayne: Creates vector of number of food in each cluster
     size_t index = 0;
@@ -690,14 +447,23 @@ void DSA_loop_functions::ClusterFoodDistribution() {
     
 	for(size_t i = 0; i < NumberOfClusters; i++)
     {
+        if(CLUSTERCONFIGONLY == false)
+        {
             //apurva
-//        placementPosition.Set(RNG->Uniform(ForageRangeX), RNG->Uniform(ForageRangeY));
-        placementPosition = placementPositionArr[i];
+            placementPosition.Set(RNG->Uniform(ForageRangeX), RNG->Uniform(ForageRangeY));
+            while(IsOutOfBounds(placementPosition, ClusterLengthY, ClusterWidthX))
+            {
+                placementPosition.Set(RNG->Uniform(ForageRangeX), RNG->Uniform(ForageRangeY));
+    
+            }
+        }
+        else if(CLUSTERCONFIGONLY == true)
+        {
+//            placementPosition = placementPositionArr[i];
+            placementPosition = ClusterPos;
+        }
         
-//        while(IsOutOfBounds(placementPosition, ClusterLengthY, ClusterWidthX)) {
-//            placementPosition.Set(RNG->Uniform(ForageRangeX), RNG->Uniform(ForageRangeY));
-        
-//        }
+
         
         /*Wayne: Modified to break from loops if food count reached.
          Provides support for unequal clusters and odd food numbers.
@@ -952,6 +718,9 @@ void DSA_loop_functions::ClearRobotVectorData()
         stRobotData_1->Neighbors.clear();
         // clear the intersection vector
         stIntersectionData->clear();
+        stRobotData_1->CollinearRobotGoingToNestList.clear();
+        stRobotData_1->CollinearRobotGoingAwayNestList.clear();
+        
 //        stRobotData_1->StopTurningTime = 0;
     }
         
@@ -1173,6 +942,10 @@ void DSA_loop_functions::IntersectionCheckModule(BaseController::RobotData *ptr,
 {
 
     argos::UInt8 IntersectionFlag_ret = 0;
+    
+    RoboId1 = ptr1->id_robot;
+    RoboId2 = ptr2->id_robot;
+    
     // get target points at a safer distance for neighbor robot only if its not going in/ out of nest
     if(ptr1->GoingToOrFromNest == true and ptr2->GoingToOrFromNest == false)
     {
@@ -1236,24 +1009,24 @@ void DSA_loop_functions::IntersectionCheckModule(BaseController::RobotData *ptr,
         
         }
     }
-    else if(((ptr1->GoingToOrFromNest == true and ptr1->GoingToNest == false) and
-            (ptr2->GoingToOrFromNest == false and ptr1->GoingToNest == true)) or
-            ((ptr2->GoingToOrFromNest == true and ptr2->GoingToNest == false) and
-             (ptr1->GoingToOrFromNest == false and ptr2->GoingToNest == true)))
-    {
-        /* Intersectio handling for robots going out of nest */
-
-
-        IntersectionFlag_ret = Find_Intersection(ptr1->StartWaypoint, ptr1->TargetWaypoint,
-                                                 ptr2->StartWaypoint, ptr2->TargetWaypoint, ptr3, ptr4,
-                                                 ptr1, ptr2, false);
-         // if the robots are intersecting, update the matrix
-         if(IntersectionFlag_ret == true)
-         {
-             IntersectionLoopValue = 5;
-             InitializeMatrixElementAndTransformElement(ptr, ptr1_index, ptr2_index, INTERSECTION1);
-         }
-    }
+//    else if(((ptr1->GoingToOrFromNest == true and ptr1->GoingToNest == false) and
+//            (ptr2->GoingToOrFromNest == false and ptr1->GoingToNest == true)) or
+//            ((ptr2->GoingToOrFromNest == true and ptr2->GoingToNest == false) and
+//             (ptr1->GoingToOrFromNest == false and ptr2->GoingToNest == true)))
+//    {
+//        /* Intersectio handling for robots going out of nest */
+//
+//
+//        IntersectionFlag_ret = Find_Intersection(ptr1->StartWaypoint, ptr1->TargetWaypoint,
+//                                                 ptr2->StartWaypoint, ptr2->TargetWaypoint, ptr3, ptr4,
+//                                                 ptr1, ptr2, false);
+//         // if the robots are intersecting, update the matrix
+//         if(IntersectionFlag_ret == true)
+//         {
+//             IntersectionLoopValue = 5;
+//             InitializeMatrixElementAndTransformElement(ptr, ptr1_index, ptr2_index, INTERSECTION1);
+//         }
+//    }
 //    else if((ptr2->GoingToOrFromNest == true and ptr2->GoingToNest == true) and
 //            (ptr1->GoingToOrFromNest == true and ptr1->GoingToNest == true))
 //    {
@@ -1543,10 +1316,98 @@ argos::UInt8 DSA_loop_functions::DecideLeftOrRight(BaseController::RobotData *pt
     return actual_direction;
 }
 
+/******************************************************************************************/
+argos::CVector2 DSA_loop_functions::GetWayPointClusterMode(BaseController::RobotData *ptr1)
+{
+    
+//    argos::Real AngleRotationValue = 50.0f;
+    argos::CRadians VectorAngle, theta, CosAngle;
+    argos::Real TurnAngle, Angle1, ret_direction;
+    argos::Real VectorLength, Vector1Length;
+    argos::UInt8 LeftorRight;
+    argos::CVector2 ResultantVector, Waypoint, RotatedVector, PointOnNest;
+//    argos::Real Waypt_dist;
+    argos::Real distance, dotprod;
+    
+    argos::CVector2 PerpendicularVec;
+    
+//    Waypt_dist = 0.5;
+    
+    Waypoint.Set(0,0);
+//    GetPointAtSafeDistance(ptr1);
+//
+//    Point1 = ptr1->IntersectionPt1;
+//
+//    Vector1 = (Point1 - ptr1->StartWaypoint);
+//    Vector1Length = (Point1 - ptr1->StartWaypoint).Length();
+//
+//    Slope = (Point1.GetY() - ptr1->StartWaypoint.GetY())/(Point1.GetX() - ptr1->StartWaypoint.GetX());
+//
+//    PointOnNest = CalculatePointAtDistanceAlongVectorDirection(ptr1->TargetWaypoint, ptr1->StartWaypoint, NestRadius);
+//
+//    ResultantVector = (NestPosition - PointOnNest);
+//    VectorAngle = (ResultantVector).Angle();
+//
+//
+//    // line is parallel to X-axis
+//    if(Slope == 0.0f)
+//    {
+//        distance = NestRadius * Sin(VectorAngle);
+//        Point1.Set(0, distance);
+//        Waypoint = CalculatePointAtDistanceAlongVectorDirection(PointOnNest, Point1, Waypt_dist);
+//
+//
+//    }
+//    // line is parallel to Y-axis
+//    else if(isinf(Slope))
+//    {
+//        distance = NestRadius * Cos(VectorAngle);
+//        Point1.Set(distance,0);
+//        Waypoint = CalculatePointAtDistanceAlongVectorDirection(PointOnNest, Point1, Waypt_dist);
+//    }
+    
+    
+    
+    // get a point on the nest circumference
+    PointOnNest = CalculatePointAtDistanceAlongVectorDirection(ptr1->TargetWaypoint,            ptr1->StartWaypoint, NestRadius);
+    
+//    ResultantVector = (ptr1->TargetWaypoint - ptr1->StartWaypoint);
+//    VectorLength = (ResultantVector).Length();
+//
+//
+//    VectorAngle = (ResultantVector).Angle();
+//
+//    TurnAngle = ToDegrees(VectorAngle).GetValue() + AngleRotationValue;
+//
+//
+//    theta = ToRadians(CDegrees(TurnAngle));
+    
+//    Waypoint.SetX((Waypt_dist) * Cos(theta) + PointOnNest.GetX());
+//    Waypoint.SetY((Waypt_dist) * Sin(theta) + PointOnNest.GetY());
+    
+        ResultantVector = (PointOnNest - NestPosition);
+        VectorLength = (ResultantVector).Length();
+    
+    
+        VectorAngle = (ResultantVector).Angle();
+    
+        TurnAngle = ToDegrees(VectorAngle).GetValue() + Rotation_Angle;
+    
+    
+        theta = ToRadians(CDegrees(TurnAngle));
+    
+    
+    Waypoint.SetX((NestRadius + WaypointDistance) * Cos(theta));
+    Waypoint.SetY((NestRadius + WaypointDistance) * Sin(theta));
+    
+    
+    return Waypoint;
+}
+
 /******************************************************************************************************************************************/
 argos::CVector2 DSA_loop_functions::CalculateWayPoint(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2, UInt8 turntype)
 {
-    argos::Real AngleRotationValue = 50.0f;
+    argos::Real AngleRotationValue = 70.0f;
     argos::CRadians VectorAngle, theta;
     argos::Real TurnAngle, ret_direction;
     argos::Real VectorLength;
@@ -1555,12 +1416,19 @@ argos::CVector2 DSA_loop_functions::CalculateWayPoint(BaseController::RobotData 
     argos::Real Waypt_dist;
     argos::Real distance;
     
-    Waypt_dist = 1.0;
+    Waypt_dist = 0.65;
     
 
     if(turntype == 1)
     {
-        ResultantVector = (ptr2->StartWaypoint - ptr2->TargetWaypoint);
+        if(CLUSTERCONFIGONLY == false)
+        {
+            ResultantVector = (ptr2->StartWaypoint - ptr2->TargetWaypoint);
+        }
+        else
+        {
+            ResultantVector = (ptr2->TargetWaypoint - ptr2->StartWaypoint);
+        }
         VectorAngle = (ResultantVector).Angle();
         VectorLength = (ResultantVector).Length();
 
@@ -1761,6 +1629,7 @@ argos::CVector2 DSA_loop_functions::CalculateWayPoint(BaseController::RobotData 
 argos::CVector2 DSA_loop_functions::CalculatePointAtDistanceAlongVectorDirection(argos::CVector2 Point1, argos::CVector2 Point2, argos::Real Distance)
 {
     
+    argos::CVector2 VectorAtDistance;
     
     argos::CVector2 ResultantVector = (Point2 - Point1);
     argos::Real vectorlength = (ResultantVector).Length();
@@ -1768,7 +1637,7 @@ argos::CVector2 DSA_loop_functions::CalculatePointAtDistanceAlongVectorDirection
     argos::CVector2 NormalizedVector = ResultantVector.Normalize();
     argos::CVector2 du = NormalizedVector * Distance;
     
-    argos::CVector2 VectorAtDistance = du + Point1;
+    VectorAtDistance = du + Point1;
     return VectorAtDistance;
 }
 
@@ -3105,6 +2974,7 @@ BaseController::IntersectionData* DSA_loop_functions::GetIntersectionDataFromVec
 {
     BaseController::IntersectionData* RobotIntersectionData = NULL;
     argos::UInt8 i;
+    
     // get the intersection data for robot1
     for(i=0; i < ptr->size(); i++)
     {
@@ -3118,6 +2988,7 @@ BaseController::IntersectionData* DSA_loop_functions::GetIntersectionDataFromVec
             break;
            
         }
+        
         RobotIntersectionData = NULL;
     }
 
@@ -3475,19 +3346,17 @@ void DSA_loop_functions::CollinearPathPlanning(BaseController::RobotData *stRobo
             if(stRobotDataThis->GoingToOrFromNest == true and stRobotDataNeighbor->GoingToOrFromNest == true)
             {
             
+//                if(((stRobotDataThis->GoingToOrFromNest == true and stRobotDataThis->GoingToNest == false) and
+//                   (stRobotDataNeighbor->GoingToOrFromNest == true and stRobotDataNeighbor->GoingToNest == false))
+//                   and (stRobotDataThis->WaypointCounter != 0 and stRobotDataNeighbor->WaypointCounter != 0))
                 if(((stRobotDataThis->GoingToOrFromNest == true and stRobotDataThis->GoingToNest == false) and
-                   (stRobotDataNeighbor->GoingToOrFromNest == true and stRobotDataNeighbor->GoingToNest == false))
-                   and (stRobotDataThis->WaypointCounter != 0 and stRobotDataNeighbor->WaypointCounter != 0))
+                    (stRobotDataNeighbor->GoingToOrFromNest == true and stRobotDataNeighbor->GoingToNest == false))
+                   and (stRobotDataThis->WaypointCounter == WayPointMaxCount and stRobotDataNeighbor->WaypointCounter == WayPointMaxCount))
                 {
                     /* Don't check for collinearity */
                     InitializeMatrixElementAndTransformElement(stRobotDataThis,0,(robotneighborindex+1),CONSISTENT);
                 }
-    //            else if((stRobotDataThis->GoingToNest == true and stRobotDataNeighbor->AddWaypoint == true) or
-    //                    (stRobotDataThis->AddWaypoint == true and stRobotDataNeighbor->GoingToNest == true))
-    //            {
-    //                /* Don't check for collinearity */
-    //                InitializeMatrixElementAndTransformElement(stRobotDataThis,0,(robotneighborindex+1),CONSISTENT);
-    //            }
+
                 else
                 {
                     if(stRobotDataNeighbor->WaypointCounter == WayPointMaxCount)
@@ -3554,6 +3423,55 @@ argos::UInt8 DSA_loop_functions::FindRobotGoingToWayPt(std::vector<argos::UInt8>
 
 }
 
+
+/**************************************************************/
+void DSA_loop_functions::ClusterModeOperation()
+{
+    argos::UInt8 robotresourceindex;
+    argos::CVector2 WayPoint;
+    
+    
+    
+    BaseController::RobotData *stRobotDataThis = NULL;
+    argos::CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+    CSpace::TMapPerType::iterator iterator1 = m_cFootbots.begin();
+    
+    for(robotresourceindex = 0; robotresourceindex < RobotResource.size(); robotresourceindex++)
+    {
+        WayPoint.Set(0,0);
+        iterator1 = m_cFootbots.begin();
+//        stRobotDataThis = NULL;
+        std::advance(iterator1, RobotResource[robotresourceindex]);
+        CFootBotEntity& cFootBotThis = *any_cast<CFootBotEntity*>(iterator1->second);
+        BaseController& cControllerThis = dynamic_cast<BaseController&>(cFootBotThis.GetControllableEntity().GetController());
+        
+        // Get the robot data
+        stRobotDataThis = &cControllerThis.GetRobotData();
+        
+        // if the robot is going away from nest
+        if(stRobotDataThis->GoingToNest == false and stRobotDataThis->GoingToOrFromNest == true)
+        {
+//            WayPoint = CalculateWayPoint(stRobotDataThis, stRobotDataThis, 1);
+            WayPoint = GetWayPointClusterMode(stRobotDataThis);
+            
+            if((stRobotDataThis->WaypointCounter < WayPointMaxCount) and
+               (CalculateDistance(stRobotDataThis->StartWaypoint, NestPosition) < MaxArenaDistance))
+
+            {
+
+                AddWayPoint(stRobotDataThis);
+                stRobotDataThis->AddedPoint = WayPoint;
+                stRobotDataThis->AddWaypoint = true;
+                stRobotDataThis->TargetWaypoint = stRobotDataThis->AddedPoint;
+                stRobotDataThis->WaypointCounter++;
+                cControllerThis.SetTarget(stRobotDataThis->TargetWaypoint);
+                cControllerThis.SetHardStopMovement();
+
+            }
+        }
+    }
+}
+
 /****************************************************************/
 void DSA_loop_functions::CollectiveCollinearCheck()
 {
@@ -3593,8 +3511,8 @@ void DSA_loop_functions::CollectiveCollinearCheck()
     CSpace::TMapPerType::iterator iterator7 = m_cFootbots.begin();
     CSpace::TMapPerType::iterator iterator8 = m_cFootbots.begin();
 
-    std::vector<argos::UInt8> CollinearRobots_GoingAwayFromNest;
-    std::vector<argos::UInt8> CollinearRobots_GoingTowardsNest;
+//    std::vector<argos::UInt8> CollinearRobots_GoingAwayFromNest;
+//    std::vector<argos::UInt8> CollinearRobots_GoingTowardsNest;
     std::vector<argos::UInt8> CollinearRobots_GoingTowardsNestCopy;
 
     argos::CVector2 WayPoint;
@@ -3696,13 +3614,27 @@ void DSA_loop_functions::CollectiveCollinearCheck()
                     if(stRobotDataNeighborNext->GoingToOrFromNest == true and stRobotDataNeighborNext->GoingToNest == false)
                     {
                         CollinearRobots_GoingAwayFromNest.push_back(stRobotDataNeighborNext->id_robot);
+                        // add the id of collinear robot to the collinear list of this robot
+                        stRobotDataThis->CollinearRobotGoingAwayNestList.push_back(stRobotDataNeighborNext->id_robot);
                     }
                     // robot going to nest
                     else if(stRobotDataNeighborNext->GoingToNest == true)
                     {
                         CollinearRobots_GoingTowardsNest.push_back(stRobotDataNeighborNext->id_robot);
+                        // add the id of collinear robot to the collinear list of this robot
+                        stRobotDataThis->CollinearRobotGoingToNestList.push_back(stRobotDataNeighborNext->id_robot);
+
                     }
-                    
+                    if(stRobotDataThis->GoingToOrFromNest == true and stRobotDataThis->GoingToNest == false)
+                    {
+                        stRobotDataNeighborNext->CollinearRobotGoingAwayNestList.push_back(stRobotDataThis->id_robot);
+                    }
+                    else if(stRobotDataThis->GoingToNest == true)
+                    {
+                        // add the id of this robot to the colinear list of other collinear robot
+                        stRobotDataNeighborNext->CollinearRobotGoingToNestList.push_back(stRobotDataThis->id_robot);
+                    }
+
                     if(Firt_Entry == false)
                     {
                         if(stRobotDataThis->GoingToOrFromNest == true and stRobotDataThis->GoingToNest == false)
@@ -3716,7 +3648,7 @@ void DSA_loop_functions::CollectiveCollinearCheck()
                         }
                         Firt_Entry = true;
                     }
-                    
+
                     InitializeMatrixElementAndTransformElement(stRobotDataThis,0, (column_index+1), CONSISTENT);
                 }// end of if(Matrix_Value == COLLINEAR)
 
@@ -3739,510 +3671,247 @@ void DSA_loop_functions::CollectiveCollinearCheck()
             SortforLeftMostRobot(&CollinearRobots_GoingTowardsNest, CollinearRobots_GoingTowardsNest.size());
         }
         
-       
-        
-        
-//        if(CollinearRobots_GoingAwayFromNest.size() > 0 and CollinearRobots_GoingTowardsNest.size() > 0)
-        if(CollinearRobots_GoingAwayFromNest.size() > 0)
+        if(CLUSTERCONFIGONLY == false)
         {
-            Counter = 0;
-            
-            
-            if(CollinearRobots_GoingTowardsNest.size() > 0)
+            if(CollinearRobots_GoingAwayFromNest.size() > 0)
             {
-                iterator4 = m_cFootbots.begin();
-                LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNest[0];
-                // get the handle to neighbor robot indicated by column
-                std::advance(iterator4, LeftMostRobotGoingToNest);
-                CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator4->second);
-                BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
-                
-                // Get the robot data
-                stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
-                
-                stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
-                WaypointType = 1;
-            }
-            else
-            {
-                iterator4 = m_cFootbots.begin();
-                LeftMostRobotGoingToNest = CollinearRobots_GoingAwayFromNest[0];
-                // get the handle to neighbor robot indicated by column
-                std::advance(iterator4, LeftMostRobotGoingToNest);
-                CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator4->second);
-                BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
-                
-                // Get the robot data
-                stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
-                
-                stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
-                
-                WaypointType = 2;
-                
-            }
-                
-            for(index2 = 0; index2 < CollinearRobots_GoingAwayFromNest.size(); index2++)
-            {
-//                WaypointType = 1;
-                
-                iterator3 = m_cFootbots.begin();
+                Counter = 0;
 
-                std::advance(iterator3, CollinearRobots_GoingAwayFromNest[index2]);
-                CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator3->second);
-                BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-
-                // Get the robot data
-                stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-                stRobotDataGoingAwayNest->CollectiveCollinearChecked = true;
-                stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-
-//                stRobotDataGoingAwayNest->distance = CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, stRobotDataGoingAwayNest->TargetPosition);
-                
-                stRobotDataGoingAwayNest->distance = (stRobotDataGoingAwayNest->TargetPosition - NestPosition).Length() - NestRadius;
-                
-                
-                CurrentDistance = stRobotDataGoingAwayNest->distance - (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, stRobotDataGoingAwayNest->TargetPosition));
-                
-                // if the robot is not at the nest
-                if((stRobotDataGoingAwayNest->StartWaypoint - NestPosition).Length() > (NestRadius + 0.05))
+                if(CollinearRobots_GoingTowardsNest.size() > 0)
                 {
+                    iterator4 = m_cFootbots.begin();
+                    LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNest[0];
+                    // get the handle to neighbor robot indicated by column
+                    std::advance(iterator4, LeftMostRobotGoingToNest);
+                    CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator4->second);
+                    BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
 
-                    if(CurrentDistance >= (0.75 * stRobotDataGoingAwayNest->distance))
-                    {
-                        WaypointType = 3;
-                    }
-                }
-//                else
-//                {
-//                    WaypointType = 1;
-//
-//                }
-                
-    
-                WayPoint = CalculateWayPoint(stRobotDataGoingAwayNest, stRobotDataLeftMostTowardsNest, WaypointType);
-           
-               
-                Neighbor_Count = stRobotDataGoingAwayNest->Neighbors.size();
-                
-                // check if the robot is at nest
-                if((stRobotDataGoingAwayNest->StartWaypoint - NestPosition).Length() < (NestRadius + 0.05))
-                {
-                    // check if there is any robot that is going to the waypoint near any neighbors
-                    if(Neighbor_Count > 0)
-                    {
-                        for(index3 = 0; index3 < Neighbor_Count; index3++ )
-                        {
-                            iterator5 = m_cFootbots.begin();
-                            
-                            std::advance(iterator5, stRobotDataGoingAwayNest->Neighbors[index3]);
-                            CFootBotEntity& cFootBotNeighbor = *any_cast<CFootBotEntity*>(iterator5->second);
-                            BaseController& cControllerNeighbor = dynamic_cast<BaseController&>(cFootBotNeighbor.GetControllableEntity().GetController());
-                            
-                            // Get the robot data
-                            stRobotNeighbor = &cControllerNeighbor.GetRobotData();
-                            
-                            stRobotNeighbor->StartWaypoint = cControllerNeighbor.GetPosition();
-                            
-                         
-                            if((stRobotNeighbor->GoingToNest == false and stRobotNeighbor->GoingToOrFromNest == true) and
-                               (stRobotNeighbor->WaypointCounter == 1))
-                            {
-                              
-                                if((stRobotNeighbor->StartWaypoint - WayPoint).Length() < 0.18)
-                                {
-                                    Counter++;
-//                                    StopTime = Counter * STOP_TIME_MULTIPLE;
-                                }
-                            }
+                    // Get the robot data
+                    stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
 
-                        }
-                    }
+                    stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
+                    WaypointType = 1;
                 }
                 else
                 {
-                    StopTime = 0;
+                    iterator4 = m_cFootbots.begin();
+                    LeftMostRobotGoingToNest = CollinearRobots_GoingAwayFromNest[0];
+                    // get the handle to neighbor robot indicated by column
+                    std::advance(iterator4, LeftMostRobotGoingToNest);
+                    CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator4->second);
+                    BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
+
+                    // Get the robot data
+                    stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
+
+                    stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
+
+                    WaypointType = 2;
+
                 }
-                
-//                if(stRobotDataGoingAwayNest->WaypointCounter > 0)
-//                {
-//                    if((WayPoint - stRobotDataGoingAwayNest->AddedPoint).Length() < 0.1)
-//                    {
-//                        NoNeedToCalculateWaypt = true;
-//                    }
-//                    else
-//                    {
-//                        NoNeedToCalculateWaypt = false;
-//                    }
-//                }
 
-                if((stRobotDataGoingAwayNest->WaypointCounter < WayPointMaxCount) and
-                   (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, NestPosition) < 8) and
-                   NoNeedToCalculateWaypt == false and CurrentDistance < 0.36)
-//                     stRobotDataGoingAwayNest->distance > 0.36 and
-
+                for(index2 = 0; index2 < CollinearRobots_GoingAwayFromNest.size(); index2++)
                 {
+                    iterator3 = m_cFootbots.begin();
 
-                    AddWayPoint(stRobotDataGoingAwayNest);
-                    stRobotDataGoingAwayNest->AddedPoint = WayPoint;
-                    stRobotDataGoingAwayNest->AddWaypoint = true;
-                    stRobotDataGoingAwayNest->TargetWaypoint = stRobotDataGoingAwayNest->AddedPoint;
-                    stRobotDataGoingAwayNest->WaypointCounter += 1;
-                    cControllerGoingAwayNest.SetTarget(stRobotDataGoingAwayNest->TargetWaypoint);
-                    cControllerGoingAwayNest.SetHardStopMovement();
-//                    stRobotDataGoingAwayNest->StopTurningTime = StopTime;
+                    std::advance(iterator3, CollinearRobots_GoingAwayFromNest[index2]);
+                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator3->second);
+                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
 
-                }
-            }// end of for
-            
-            
-            
+                    // Get the robot data
+                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
+                    stRobotDataGoingAwayNest->CollectiveCollinearChecked = true;
+                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
 
-    }// end of if
+
+                    stRobotDataGoingAwayNest->distance = (stRobotDataGoingAwayNest->TargetPosition - NestPosition).Length() - NestRadius;
+
+
+                    CurrentDistance = stRobotDataGoingAwayNest->distance - (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, stRobotDataGoingAwayNest->TargetPosition));
+
+                    // if the robot is not at the nest
+                    if((stRobotDataGoingAwayNest->StartWaypoint - NestPosition).Length() > (NestRadius + 0.05))
+                    {
+
+                        if(CurrentDistance >= (0.75 * stRobotDataGoingAwayNest->distance))
+                        {
+                            WaypointType = 3;
+                        }
+                    }
+
+
+                    WayPoint = CalculateWayPoint(stRobotDataGoingAwayNest, stRobotDataLeftMostTowardsNest, WaypointType);
+
+
+                    Neighbor_Count = stRobotDataGoingAwayNest->Neighbors.size();
+
+                    // check if the robot is at nest
+                    if((stRobotDataGoingAwayNest->StartWaypoint - NestPosition).Length() < (NestRadius + 0.05))
+                    {
+                        // check if there is any robot that is going to the waypoint near any neighbors
+                        if(Neighbor_Count > 0)
+                        {
+                            for(index3 = 0; index3 < Neighbor_Count; index3++ )
+                            {
+                                iterator5 = m_cFootbots.begin();
+
+                                std::advance(iterator5, stRobotDataGoingAwayNest->Neighbors[index3]);
+                                CFootBotEntity& cFootBotNeighbor = *any_cast<CFootBotEntity*>(iterator5->second);
+                                BaseController& cControllerNeighbor = dynamic_cast<BaseController&>(cFootBotNeighbor.GetControllableEntity().GetController());
+
+                                // Get the robot data
+                                stRobotNeighbor = &cControllerNeighbor.GetRobotData();
+
+                                stRobotNeighbor->StartWaypoint = cControllerNeighbor.GetPosition();
+
+
+                                if((stRobotNeighbor->GoingToNest == false and stRobotNeighbor->GoingToOrFromNest == true) and
+                                   (stRobotNeighbor->WaypointCounter == 1))
+                                {
+
+                                    if((stRobotNeighbor->StartWaypoint - WayPoint).Length() < 0.18)
+                                    {
+                                        Counter++;
+                                    } //  end of if((stRobotNeighbor->StartWaypoint - WayPoint).Length() < 0.18)
+                                } // if((stRobotNeighbor->GoingToNest == false and stRobotNeighbor->GoingToOrFromNest == true) and
+
+                            }// end of for(index3 = 0; index3 < Neighbor_Count; index3++ )
+                        }// end of if(Neighbor_Count > 0)
+                    } // end of if((stRobotDataGoingAwayNest->StartWaypoint - NestPosition).Length() < (NestRadius + 0.05))
+                    else
+                    {
+                        StopTime = 0;
+                    }
+
+
+
+                    if((stRobotDataGoingAwayNest->WaypointCounter < WayPointMaxCount) and
+                       (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, NestPosition) < 8) and
+                       NoNeedToCalculateWaypt == false and CurrentDistance < 0.36)
+
+
+                    {
+
+                        AddWayPoint(stRobotDataGoingAwayNest);
+                        stRobotDataGoingAwayNest->AddedPoint = WayPoint;
+                        stRobotDataGoingAwayNest->AddWaypoint = true;
+                        stRobotDataGoingAwayNest->TargetWaypoint = stRobotDataGoingAwayNest->AddedPoint;
+                        stRobotDataGoingAwayNest->WaypointCounter += 1;
+                        cControllerGoingAwayNest.SetTarget(stRobotDataGoingAwayNest->TargetWaypoint);
+                        cControllerGoingAwayNest.SetHardStopMovement();
+                        //                    stRobotDataGoingAwayNest->StopTurningTime = StopTime;
+
+                    }
+                }// end of for(index2 = 0; index2 < CollinearRobots_GoingAwayFromNest.size(); index2++)
+
+            }// end of if(CollinearRobots_GoingAwayFromNest.size() > 0)
+
         
-    if(CollinearRobots_GoingTowardsNest.size() >= 1 and CollinearRobots_GoingAwayFromNest.size() > 0)
-    {
-        CollinearRobots_GoingTowardsNestCopy = CollinearRobots_GoingTowardsNest;
-//        SortRobotForward(&CollinearRobots_GoingTowardsNestCopy, CollinearRobots_GoingTowardsNestCopy.size(), 1);
-//        for(index1 = 0; index1 < CollinearRobots_GoingTowardsNestCopy.size(); index1++)
-        for(index1 = 0; index1 < CollinearRobots_GoingTowardsNest.size(); index1++)
-        {
-            iterator2 = m_cFootbots.begin();
-            LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNest[index1];
-//            LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNestCopy[index1];
-            
-            LeftMostRobotID = LeftMostRobotGoingToNest;
-            // get the handle to neighbor robot indicated by column
-            std::advance(iterator2, LeftMostRobotGoingToNest);
-            CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator2->second);
-            BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
-            
-            // Get the robot data
-            stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
-            stRobotDataLeftMostTowardsNest->CollectiveCollinearChecked = true;
-            
-            stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
-            WaypointType = 1;
-            
-            if(stRobotDataLeftMostTowardsNest->StopTurningTime == 0)
+        
+        
+        
+        
+        
+        
+        
+//            if(CollinearRobots_GoingTowardsNest.size() >= 1 and CollinearRobots_GoingAwayFromNest.size() > 0)
+//            {
+//                CollinearRobots_GoingTowardsNestCopy = CollinearRobots_GoingTowardsNest;
+//
+//                for(index1 = 0; index1 < CollinearRobots_GoingTowardsNest.size(); index1++)
+//                {
+//                    iterator2 = m_cFootbots.begin();
+//                    LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNest[index1];
+//                    //            LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNestCopy[index1];
+//
+//                    LeftMostRobotID = LeftMostRobotGoingToNest;
+//                    // get the handle to neighbor robot indicated by column
+//                    std::advance(iterator2, LeftMostRobotGoingToNest);
+//                    CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator2->second);
+//                    BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
+//
+//                    // Get the robot data
+//                    stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
+//                    stRobotDataLeftMostTowardsNest->CollectiveCollinearChecked = true;
+//
+//                    stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
+//                    WaypointType = 1;
+//
+//                    if(stRobotDataLeftMostTowardsNest->StopTurningTime == 0)
+//                    {
+//                        stRobotDataLeftMostTowardsNest->StopTurningTime = STOP_TIME_MULTIPLE * index1;
+//                    }
+//
+//
+//                }
+//            }
+        
+        
+        
+        
+        
+        
+            }// end of if(CLUSTERCONFIGONLY == false)
+            else
             {
-                stRobotDataLeftMostTowardsNest->StopTurningTime = STOP_TIME_MULTIPLE * index1;
+                ClusterModeOperation();
             }
-            
-            
-        }
-    }
-    
-//        if(CollinearRobots_GoingTowardsNest.size() > 0)
-//        {
-//            iterator3 = m_cFootbots.begin();
-//            LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNest[0];
-//
-//            LeftMostRobotID = LeftMostRobotGoingToNest;
-//            // get the handle to neighbor robot indicated by column
-//            std::advance(iterator3, LeftMostRobotGoingToNest);
-//            CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator3->second);
-//            BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
-//
-//            // Get the robot data
-//            stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
-//
-//            stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
-//            WaypointType = 1;
-//
-//            // if there is many: many relataionship -> going to nest: going away from nest
-//            if(CollinearRobots_GoingAwayFromNest.size() > 1)
-//            {
-//                /* TBD */
-//
-//                //check if there is any robot gong away from nest, that is going to a waypt
-//                // set the flags if the robot alreay going to the waypt is the leftmost robot
-//                RobotId = FindRobotGoingToWayPt(&CollinearRobots_GoingAwayFromNest, CollinearRobots_GoingAwayFromNest.size());
-//
-//
-//                // there is a robot that is going to waypt away from nest
-//                if(RobotId != 255)
-//                {
-//                    RobotWithWaypt = true;
-//
-//                    iterator6 = m_cFootbots.begin();
-//
-//                    // get the handle to neighbor robot indicated by column
-//                    std::advance(iterator6, RobotId);
-//                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator6->second);
-//                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                    // Get the robot data
-//                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//                }
-//                // there is no robot that has been added with waypoint
-//                else
-//                {
-//                    RobotWithWaypt = false;
-//                }
-//
-//                if(RobotWithWaypt == true)
-//                {
-//                    PreviousWaypoint = stRobotDataGoingAwayNest->AddedPoint;
-//                    WayPoint = PreviousWaypoint;
-//                    Counter = 0;
-//                }
-//                else
-//                {
-//                    RobotId = CollinearRobots_GoingAwayFromNest[0];
-//                    iterator7 = m_cFootbots.begin();
-//
-//                    std::advance(iterator7, CollinearRobots_GoingAwayFromNest[0]);
-//                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator7->second);
-//                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                    // Get the robot data
-//                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//
-//                    PreviousWaypoint = CalculateWayPoint(stRobotDataGoingAwayNest, stRobotDataLeftMostTowardsNest, WaypointType);
-//                    WayPoint = PreviousWaypoint;
-//
-//                    if(stRobotDataGoingAwayNest->AddWaypoint == true)
-//                    {
-//                        if((WayPoint - stRobotDataGoingAwayNest->AddedPoint).Length() < 0.1)
-//                        {
-//                            NoNeedToCalculateWaypt = true;
-//                        }
-//                        else
-//                        {
-//                            NoNeedToCalculateWaypt = false;
-//                        }
-//                    }
-//                    Counter = 0;
-//                }
-//
-//                // add the waypoint
-//                for(index1 = 0; index1 < CollinearRobots_GoingAwayFromNest.size(); index1++)
-//                {
-//                    iterator7 = m_cFootbots.begin();
-//
-//                    std::advance(iterator7, CollinearRobots_GoingAwayFromNest[index1]);
-//                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator7->second);
-//                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                    // Get the robot data
-//                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//
-//                    stRobotDataGoingAwayNest->distance = CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, stRobotDataGoingAwayNest->TargetPosition);
-//
-//
-//                    if((stRobotDataGoingAwayNest->WaypointStack.empty() == true or stRobotDataGoingAwayNest->WaypointCounter < WayPointMaxCount) and
-//                       (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, NestPosition) < 8) and
-//                       stRobotDataGoingAwayNest->distance > 0.18 and (stRobotDataGoingAwayNest->AddedPoint - WayPoint).Length() > 0.1 and
-//                       NoNeedToCalculateWaypt == false)
-//
-//                    {
-//                        Counter++;
-//                        StopTime = Counter * (STOP_TIME_MULTIPLE/2);
-//                        AddWayPoint(stRobotDataGoingAwayNest);
-//                        stRobotDataGoingAwayNest->AddedPoint = WayPoint;
-//                        stRobotDataGoingAwayNest->AddWaypoint = true;
-//                        stRobotDataGoingAwayNest->TargetWaypoint = stRobotDataGoingAwayNest->AddedPoint;
-//                        stRobotDataGoingAwayNest->WaypointCounter += 1;
-//                        cControllerGoingAwayNest.SetTarget(stRobotDataGoingAwayNest->TargetWaypoint);
-//                        cControllerGoingAwayNest.SetHardStopMovement();
-//
-//                    }
-//
-//            }// end of for
-//
-//            for(index2 = 0; index2 < CollinearRobots_GoingTowardsNest.size(); index2++)
-//            {
-//                iterator3 = m_cFootbots.begin();
-////                LeftMostRobotGoingToNest = CollinearRobots_GoingTowardsNest[0];
-////
-////                LeftMostRobotID = LeftMostRobotGoingToNest;
-////                // get the handle to neighbor robot indicated by column
-//                std::advance(iterator3, CollinearRobots_GoingTowardsNest[index2]);
-//                CFootBotEntity& cFootBotLeftMostTowardsNest = *any_cast<CFootBotEntity*>(iterator3->second);
-//                BaseController& cControllerLeftMostTowardsNest = dynamic_cast<BaseController&>(cFootBotLeftMostTowardsNest.GetControllableEntity().GetController());
-//
-//                // Get the robot data
-//                stRobotDataLeftMostTowardsNest = &cControllerLeftMostTowardsNest.GetRobotData();
-//
-//                stRobotDataLeftMostTowardsNest->StartWaypoint = cControllerLeftMostTowardsNest.GetPosition();
-//                stRobotDataLeftMostTowardsNest->StopTurningTime = STOP_TIME_MULTIPLE;
-//
-//            }
-//
-//            }
-//
-//            // if there is 1: 1 relationship -> going to nest: going away from nest
-//            else if(CollinearRobots_GoingAwayFromNest.size() == 1)
-//            {
-//                WaypointType = 1;
-//
-//                iterator5 = m_cFootbots.begin();
-//
-//                // get the handle to neighbor robot indicated by column
-//                std::advance(iterator5, CollinearRobots_GoingAwayFromNest[0]);
-//                CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator5->second);
-//                BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                // Get the robot data
-//                stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//
-//                stRobotDataGoingAwayNest->distance = CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, stRobotDataGoingAwayNest->TargetPosition);
-//
-////                if(stRobotDataGoingAwayNest->distance > 0.18 and stRobotDataGoingAwayNest->distance < 0.3)
-////                {
-////                    WaypointType = 3;
-////                    stRobotDataLeftMostTowardsNest->StopTurningTime = 70;
-////                }
-//
-//                WayPoint = CalculateWayPoint(stRobotDataGoingAwayNest, stRobotDataLeftMostTowardsNest, WaypointType);
-//
-//                if(stRobotDataGoingAwayNest->AddWaypoint == true)
-//                {
-//                    if((WayPoint - stRobotDataGoingAwayNest->AddedPoint).Length() < 0.1)
-//                    {
-//                        NoNeedToCalculateWaypt = true;
-//                    }
-//                    else
-//                    {
-//                        NoNeedToCalculateWaypt = false;
-//                    }
-//                }
-//
-//                if((stRobotDataGoingAwayNest->WaypointStack.empty() == true or stRobotDataGoingAwayNest->WaypointCounter < WayPointMaxCount) and
-//                   (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, NestPosition) < 8) and
-//                   stRobotDataGoingAwayNest->distance > 0.18 and NoNeedToCalculateWaypt == false)
-//
-//                {
-//                    AddWayPoint(stRobotDataGoingAwayNest);
-//                    stRobotDataGoingAwayNest->AddedPoint = WayPoint;
-//                    stRobotDataGoingAwayNest->AddWaypoint = true;
-//                    stRobotDataGoingAwayNest->TargetWaypoint = stRobotDataGoingAwayNest->AddedPoint;
-//                    stRobotDataGoingAwayNest->WaypointCounter += 1;
-//                    stRobotDataLeftMostTowardsNest->StopTurningTime = STOP_TIME_MULTIPLE;
-//                    cControllerGoingAwayNest.SetTarget(stRobotDataGoingAwayNest->TargetWaypoint);
-//                    cControllerGoingAwayNest.SetHardStopMovement();
-//
-//                }
-//            }
-//
-//
-//        }
-//        // size is 0 and there is no robot going to nest and there is more than a robot going out of nest
-//        // if there is 0: many relataionship -> going to nest: going away from nest
-//        else
-//        {
-//            WaypointType = 1;
-//
-//            if(CollinearRobots_GoingAwayFromNest.size() > 1)
-//            {
-//                //check if there is any robot gong away from nest, that is going to a waypt
-//                // set the flags if the robot alreay going to the waypt is the leftmost robot
-//                RobotId = FindRobotGoingToWayPt(&CollinearRobots_GoingAwayFromNest, CollinearRobots_GoingAwayFromNest.size());
-//
-//
-//                // there is a robot that is going to waypt away from nest
-//                if(RobotId != 255)
-//                {
-//                    RobotWithWaypt = true;
-//
-//                    iterator6 = m_cFootbots.begin();
-//
-//                    // get the handle to neighbor robot indicated by column
-//                    std::advance(iterator6, RobotId);
-//                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator6->second);
-//                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                    // Get the robot data
-//                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//                }
-//                // there is no robot that has been added with waypoint
-//                else
-//                {
-//                    RobotWithWaypt = false;
-//                }
-//
-//                if(RobotWithWaypt == true)
-//                {
-//                    PreviousWaypoint = stRobotDataGoingAwayNest->AddedPoint;
-//                    WayPoint = PreviousWaypoint;
-//                    Counter = 0;
-//                }
-//                else
-//                {
-//                    RobotId = CollinearRobots_GoingAwayFromNest[0];
-//                    iterator7 = m_cFootbots.begin();
-//
-//                    std::advance(iterator7, CollinearRobots_GoingAwayFromNest[0]);
-//                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator7->second);
-//                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                    // Get the robot data
-//                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//
-//                    PreviousWaypoint = CalculateWayPoint(stRobotDataGoingAwayNest, stRobotDataLeftMostTowardsNest, WaypointType);
-//                    WayPoint = PreviousWaypoint;
-//                    Counter = 0;
-//                }
-//
-//                // add the waypoint
-//                for(index1 = 0; index1 < CollinearRobots_GoingAwayFromNest.size(); index1++)
-//                {
-//                    iterator7 = m_cFootbots.begin();
-//
-//                    std::advance(iterator7, CollinearRobots_GoingAwayFromNest[index1]);
-//                    CFootBotEntity& cFootBotGoingAwayNest = *any_cast<CFootBotEntity*>(iterator7->second);
-//                    BaseController& cControllerGoingAwayNest = dynamic_cast<BaseController&>(cFootBotGoingAwayNest.GetControllableEntity().GetController());
-//
-//                    // Get the robot data
-//                    stRobotDataGoingAwayNest = &cControllerGoingAwayNest.GetRobotData();
-//
-//                    stRobotDataGoingAwayNest->StartWaypoint = cControllerGoingAwayNest.GetPosition();
-//
-//                    stRobotDataGoingAwayNest->distance = CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, stRobotDataGoingAwayNest->TargetPosition);
-//
-//
-//                    if((stRobotDataGoingAwayNest->WaypointStack.empty() == true or stRobotDataGoingAwayNest->WaypointCounter < WayPointMaxCount) and
-//                       (CalculateDistance(stRobotDataGoingAwayNest->StartWaypoint, NestPosition) < 8) and
-//                       stRobotDataGoingAwayNest->distance > 0.18 and (stRobotDataGoingAwayNest->AddedPoint - WayPoint).Length() > 0.1)
-//
-//                    {
-//                        Counter++;
-//                        StopTime = Counter * STOP_TIME_MULTIPLE;
-//                        AddWayPoint(stRobotDataGoingAwayNest);
-//                        stRobotDataGoingAwayNest->AddedPoint = WayPoint;
-//                        stRobotDataGoingAwayNest->AddWaypoint = true;
-//                        stRobotDataGoingAwayNest->TargetWaypoint = stRobotDataGoingAwayNest->AddedPoint;
-//                        stRobotDataGoingAwayNest->WaypointCounter += 1;
-//                        cControllerGoingAwayNest.SetTarget(stRobotDataGoingAwayNest->TargetWaypoint);
-//                        cControllerGoingAwayNest.SetHardStopMovement();
-//
-//                    }
-//
-//                }// end of for
-//            }// end of if(CollinearRobots_GoingAwayFromNest.size() > 1)
-//        }
         
+        }// end of for(robotresourceindex = 0; robotresourceindex < RobotResource.size(); robotresourceindex++)
         
-    }// end of for(robotresourceindex = 0; robotresourceindex < RobotResource.size(); robotresourceindex++)
-    
-    
+            
+        
     
     
 }
 
-
+/***************************************************************************************************************/
+void DSA_loop_functions::GetRectangleCoordinates(argos::CVector2 StartPoint, argos::CVector2 EndPoint)
+{
+    argos::UInt8 Direction, Axis;
+    
+    argos::Real dist, length, width;
+    
+    /* slope = (y2-y1)/(x2-x1)
+     * if slope is 0 i.e. y2-y1 = 0 -> line is horizontal i.e. parallel to x-axis
+     * if slope is undefined i.e. x2-x1 = 0 -> line is vertical, parallel to y- axis */
+    
+    // the line is parallel to y -axis
+    if(StartPoint.GetX() - EndPoint.GetX() == 0)
+    {
+        Axis = 1;
+        // the y coordinate is increasing: : add the radius
+        if(StartPoint.GetY() < EndPoint.GetY())
+        {
+            Direction = 1;
+        }
+        // the y-coordinate is decreasing : subtract the radius
+        else{
+            Direction = 0;
+        }
+    }
+    // line is parallel to x- axis
+    else if(StartPoint.GetY() - EndPoint.GetY() == 0)
+    {
+        Axis = 0;
+        // the x coordinate is increasing: : add the radius
+        if(StartPoint.GetX() < EndPoint.GetX())
+        {
+            Direction = 1;
+        }
+        // the x-coordinate is decreasing : subtract the radius
+        else{
+            Direction = 0;
+        }
+    }
+    
+    dist = CalculateDistance(StartPoint, EndPoint);
+    length = dist + FOOTBOT_RADIUS;
+    width = 2 * FOOTBOT_RADIUS;
+    
+    // calculate the 4 coordinates of rectangle
+    
+}
 
 ///**********************************************************************************************************************************************************************/
 ///* Function to get the Intersection data from the intersection vcector */
@@ -4758,17 +4427,16 @@ void DSA_loop_functions::Avoid_Collision()
     argos::CVector2 TargetPoint;
     argos::UInt8 row_size, column_size, row_index, column_index, Matrix_Value;
     argos::UInt8 robotresourceindex, robotneighborindex, robotnextneighborindex;
+    
     BaseController::RobotData *stRobotDataThis = NULL;
     BaseController::RobotData *stRobotDataNeighbor = NULL;
     BaseController::RobotData *stRobotDataNeighborNext = NULL;
     
-    //    BaseController::IntersectionData *stIntersectionDataThis = NULL;
+  
     std::vector<BaseController::IntersectionData>* stIntersectionDataThis = NULL;
     std::vector<BaseController::IntersectionData>* stIntersectionDataNeighbor = NULL;
     std::vector<BaseController::IntersectionData>* stIntersectionDataNeighborNext = NULL;
     
-    BaseController::IntersectionData* Robot1IntersectionData = NULL;
-    BaseController::IntersectionData* Robot2IntersectionData = NULL;
     
     BaseController::IntersectionData* InersectionDataRobot1 = NULL;
     BaseController::IntersectionData* InersectionDataRobot2 = NULL;
@@ -4778,7 +4446,7 @@ void DSA_loop_functions::Avoid_Collision()
     CSpace::TMapPerType::iterator iterator2 = m_cFootbots.begin();
     CSpace::TMapPerType::iterator iterator3 = m_cFootbots.begin();
     
-    IntersectionLoopValue = 5;
+//    IntersectionLoopValue = 5;
     
     // update neighbor matrix for every robot that has collected resource
     for(robotresourceindex = 0; robotresourceindex < RobotResource.size(); robotresourceindex++)
@@ -4793,10 +4461,10 @@ void DSA_loop_functions::Avoid_Collision()
         stRobotDataThis = &cControllerThis.GetRobotData();
         
         // Get Intersection Data
-//        stIntersectionDataThis = &cControllerThis.GetIntersectionData();
         stIntersectionDataThis = cControllerThis.GetIntersectionData();
         
         row_size = stRobotDataThis->NeighborsMatrix.size();
+        
         // get number of columns
         if(row_size > 0)
         {
@@ -4812,8 +4480,9 @@ void DSA_loop_functions::Avoid_Collision()
                 // get the value of the matrix avoiding redundancy (eg: don't check for 1,0 as 0,1 is already checked)
                 if((row_index != column_index) and (column_index > row_index))
                 {
-                   Matrix_Value = stRobotDataThis->NeighborsMatrix[row_index][column_index];
+                    Matrix_Value = stRobotDataThis->NeighborsMatrix[row_index][column_index];
                     IntersectionLoopValue = Matrix_Value;
+                    
                     if(Matrix_Value == CONSISTENT)
                     {
                         /* Do Nothing */
@@ -4842,7 +4511,7 @@ void DSA_loop_functions::Avoid_Collision()
 
                         // Get the robot data
                         stRobotDataNeighbor = &cControllerNeighbor.GetRobotData();
-//                        stIntersectionDataNeighbor = &cControllerNeighbor.GetIntersectionData();
+
                         stIntersectionDataNeighbor = cControllerNeighbor.GetIntersectionData();
                         
                         stRobotDataNeighbor->StartWaypoint = cControllerNeighbor.GetPosition();
@@ -4855,45 +4524,18 @@ void DSA_loop_functions::Avoid_Collision()
 
                         // Get the robot data
                         stRobotDataNeighborNext = &cControllerNextNeighbor.GetRobotData();
-//                        stIntersectionDataNeighborNext = &cControllerNextNeighbor.GetIntersectionData();
+
                         stIntersectionDataNeighborNext = cControllerNextNeighbor.GetIntersectionData();
                         
                         stRobotDataNeighborNext->StartWaypoint = cControllerNextNeighbor.GetPosition();
-
+                        
+                        InersectionDataRobot1 = NULL;
+                        InersectionDataRobot2 = NULL;
+                        
                         // implement collinear collision avoidance
                        if(Matrix_Value == COLLINEAR)
                        {
-//                           stRobotDataNeighbor->AddWaypoint = false;
-//                           stRobotDataNeighborNext->AddWaypoint = false;
-                           
-                           
-                           
-                           //Collinearity handling
-//                           AvoidCollinearCollision(stRobotDataNeighbor, stRobotDataNeighborNext, stRobotDataThis, stIntersectionDataNeighbor,
-//                                                   stIntersectionDataNeighborNext);
-//
-//                           if(stRobotDataNeighbor->AddWaypoint == true)
-//                           {
-////                               AddWayPoint(stRobotDataNeighbor);
-////                               stRobotDataNeighbor->TargetWaypoint = stRobotDataNeighbor->AddedPoint;
-//                               cControllerNeighbor.SetTarget(stRobotDataNeighbor->AddedPoint);
-////                               stRobotDataNeighbor->WaypointStackpopped = true;
-//
-//                               cControllerNeighbor.SetHardStopMovement();
-//                           }
-//                           if(stRobotDataNeighborNext->AddWaypoint == true)
-//                           {
-////                               AddWayPoint(stRobotDataNeighborNext);
-//
-//                               cControllerNextNeighbor.SetTarget(stRobotDataNeighborNext->AddedPoint);
-////                               stRobotDataNeighborNext->WaypointStackpopped = true;
-////                               stRobotDataNeighborNext->TargetWaypoint = stRobotDataNeighborNext->AddedPoint;
-//                               cControllerNextNeighbor.SetHardStopMovement();
-//                           }
-
-//                           CollectiveCollinearCheck();
-//                           InitializeMatrixElementAndTransformElement(stRobotDataThis,row_index,
-//                                                                      column_index, CONSISTENT);
+                            /* Do Nothing */
 
                        }
                         // implement intersection collision avoidance
@@ -4902,8 +4544,8 @@ void DSA_loop_functions::Avoid_Collision()
 
                            if(stRobotDataNeighbor->GoingToOrFromNest == false and stRobotDataNeighborNext->GoingToOrFromNest == true)
                            {
-                               TestVariable = 1;
-                               TestValue = stRobotDataNeighbor->id_robot;
+//                              TestVariable = 1;
+//                              TestValue = stRobotDataNeighbor->id_robot;
                               InersectionDataRobot1 = GetIntersectionDataFromVector(stIntersectionDataNeighbor,
                                                                                     stRobotDataNeighborNext->id_robot, Matrix_Value);
 
@@ -4911,8 +4553,15 @@ void DSA_loop_functions::Avoid_Collision()
                               InersectionDataRobot2 = GetIntersectionDataFromVector(stIntersectionDataNeighborNext,
                                                                                      stRobotDataNeighbor->id_robot, Matrix_Value);
 
-                                  IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
-                                                              Matrix_Value, 2);
+//                              IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
+//                                                              Matrix_Value, 2);
+
+
+//                               IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
+//                                                          Matrix_Value, 1);
+
+                                                              IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
+                                                                                         Matrix_Value, 3);
 
 
 
@@ -4920,25 +4569,26 @@ void DSA_loop_functions::Avoid_Collision()
                            else if(stRobotDataNeighborNext->GoingToOrFromNest == false and stRobotDataNeighbor->GoingToOrFromNest == true)
                            {
 
-                               TestVariable = 2;
-                               TestValue = stRobotDataNeighbor->id_robot;
+//                               TestVariable = 2;
+//                               TestValue = stRobotDataNeighbor->id_robot;
                                InersectionDataRobot1 = GetIntersectionDataFromVector(stIntersectionDataNeighbor,
                                                                                      stRobotDataNeighborNext->id_robot, Matrix_Value);
 
 
                                InersectionDataRobot2 = GetIntersectionDataFromVector(stIntersectionDataNeighborNext,
                                                                                      stRobotDataNeighbor->id_robot, Matrix_Value);
-                               
 
-                                   IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
-                                                              Matrix_Value, 1);
+//                               IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
+//                                                              Matrix_Value, 1);
+                               IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
+                                                          Matrix_Value, 3);
 
 
                            }
                            else
                            {
-                               TestVariable = 3;
-                               TestValue = stRobotDataNeighbor->id_robot;
+//                               TestVariable = 3;
+//                               TestValue = stRobotDataNeighbor->id_robot;
 
 
                                InersectionDataRobot1 = GetIntersectionDataFromVector(stIntersectionDataNeighbor,
@@ -4946,7 +4596,7 @@ void DSA_loop_functions::Avoid_Collision()
 
                                InersectionDataRobot2 = GetIntersectionDataFromVector(stIntersectionDataNeighborNext,
                                                                                      stRobotDataNeighbor->id_robot, Matrix_Value);
-                               
+
                                IntersectionCollisionCheck(stRobotDataNeighbor, stRobotDataNeighborNext, InersectionDataRobot1, InersectionDataRobot2,
                                                           Matrix_Value, 3);
 
@@ -5024,28 +4674,33 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
     argos::UInt16 TimeToIntersection1, TimeToIntersection2, TicksToWaitRobot1, TicksToWaitRobot2, TicksToWaitforSafedistance,
                   TimeToTurn1, TimeToTurn2, TimeFromStartPoint1, TimeFromStartPoint2, TimeToIntersectionRobot1, TimeToIntersectionRobot2,
                   TimeDiff, TimeToIntersection, i, j;
-    argos::Real DistanceToIntersection1, DistanceToIntersection2, IntersectionDistance, AdjustedVelocity;
+    argos::Real DistanceToIntersection1, DistanceToIntersection2, IntersectionDistance, AdjustedVelocity, Difference_Dist;
     
     argos::UInt16 SafeTurningTime;
     
     argos::Real SafeTurningAngle = 70.0f;
     
-    argos::UInt16 Bufferime = 50;
+    argos::UInt16 Bufferime = SimulatorTicksperSec + 20;
 
-    
+    argos::UInt16 CollisionDetectionTime;
     SafeTurningTime = GetTimeToTurn(SafeTurningAngle, ptr1->fBaseAngularWheelSpeed);
+    
+//    IntersectionPtCopy1 = Robot1IntersectionData->IntersectionPoint;
+//    IntersectionPtCopy2 = Robot2IntersectionData->IntersectionPoint;
+//    IntValue = IntersectionValue;
+//    RoboNo = index;
     
     if(Robot1IntersectionData != NULL and Robot2IntersectionData != NULL)
     {
         if(IntersectionValue == INTERSECTION1)
         {
             // caluclate for Robot 1
-            
+
             // calculate the time required by robot 1 if the intersection value is INTERSECTION2
             argos::CRadians Headingangle1 = (Robot1IntersectionData->IntersectionPoint - Robot1IntersectionData->StartPoint).Angle();
             argos::CRadians TurningAngle1 = (ptr1->Orientation - Headingangle1).SignedNormalize();
             argos::Real TurningAngle1_Deg = ToDegrees(TurningAngle1).GetValue();
-            
+
             if(TurningAngle1_Deg < 0.0)
             {
                 TurningAngle1_Deg = -TurningAngle1_Deg;
@@ -5054,19 +4709,19 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
             {
                 TurningAngle1_Deg = TurningAngle1_Deg;
             }
-            
+
             TimeToTurn1 = GetTimeToTurn(TurningAngle1_Deg, ptr1->fBaseAngularWheelSpeed) + SafeTurningTime;
-            
+
             DistanceToIntersection1 = CalculateDistance(Robot1IntersectionData->StartPoint, Robot1IntersectionData->IntersectionPoint);
             TimeFromStartPoint1 = GetTicksToWait(DistanceToIntersection1, ptr1->fLinearWheelSpeed);
             TimeToIntersectionRobot1 = TimeToTurn1 + TimeFromStartPoint1 + ptr1->StopTurningTime + SafeTurningTime;
-            
+
             // caluclate for Robot 2
             argos::CRadians Headingangle2 = (Robot2IntersectionData->IntersectionPoint - Robot2IntersectionData->StartPoint).Angle();
             argos::CRadians TurningAngle2 = (ptr2->Orientation - Headingangle2).SignedNormalize();
-            
+
             argos::Real TurningAngle2_Deg = ToDegrees(TurningAngle2).GetValue();
-            
+
             if(TurningAngle2_Deg < 0.0)
             {
                 TurningAngle2_Deg = -TurningAngle2_Deg;
@@ -5075,27 +4730,27 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
             {
                 TurningAngle2_Deg = TurningAngle2_Deg;
             }
-            
-            
+
+
             TimeToTurn2 = GetTimeToTurn(TurningAngle2_Deg, ptr2->fBaseAngularWheelSpeed) + SafeTurningTime;
-            
+
             DistanceToIntersection2 = CalculateDistance(Robot2IntersectionData->StartPoint,Robot2IntersectionData->IntersectionPoint);
-            
+
             TimeFromStartPoint2 = GetTicksToWait(DistanceToIntersection2, ptr2->fLinearWheelSpeed);
-            
+
             TimeToIntersectionRobot2 = TimeToTurn2 + TimeFromStartPoint2 + ptr2->StopTurningTime + SafeTurningTime;
-            
+
             TicksToWaitforSafedistance = (GetTicksToWait(Safedistance , MaxLinearSpeed) + Bufferime);
         }
-        
+
         else
         {
             // calculate the time required by robot 1 if the intersection value is INTERSECTION2
             argos::CRadians Headingangle1 = (Robot1IntersectionData->IntersectionPoint - Robot1IntersectionData->StartPoint).Angle();
             argos::CRadians TurningAngle1 = (ptr1->Orientation - Headingangle1).SignedNormalize();
-            
+
             argos::Real TurningAngle1_Deg = ToDegrees(TurningAngle1).GetValue();
-            
+
             if(TurningAngle1_Deg < 0.0)
             {
                 TurningAngle1_Deg = -TurningAngle1_Deg;
@@ -5104,22 +4759,22 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
             {
                 TurningAngle1_Deg = TurningAngle1_Deg;
             }
-            
+
             TimeToTurn1 = GetTimeToTurn(TurningAngle1_Deg, ptr1->fBaseAngularWheelSpeed) + SafeTurningTime;
-            
+
             DistanceToIntersection1 = CalculateDistance(Robot1IntersectionData->StartPoint, Robot1IntersectionData->IntersectionPoint) +
                                       CalculateDistance(ptr1->StartWaypoint, Robot1IntersectionData->StartPoint);
-            
+
             TimeFromStartPoint1 = GetTicksToWait(DistanceToIntersection1, ptr1->fLinearWheelSpeed);
             TimeToIntersectionRobot1 = TimeFromStartPoint1 + TimeToTurn1 + ptr1->StopTurningTime;
-            
+
 
             // calculate the time required by robot 2 if the intersection value is INTERSECTION2
             argos::CRadians Headingangle2 = (Robot2IntersectionData->IntersectionPoint - Robot2IntersectionData->StartPoint).Angle();
             argos::CRadians TurningAngle2 = (ptr2->Orientation - Headingangle2).SignedNormalize();
-            
+
             argos::Real TurningAngle2_Deg = ToDegrees(TurningAngle2).GetValue();
-            
+
             if(TurningAngle2_Deg < 0.0)
             {
                 TurningAngle2_Deg = -TurningAngle2_Deg;
@@ -5128,19 +4783,42 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
             {
                 TurningAngle2_Deg = TurningAngle2_Deg;
             }
-            
+
             TimeToTurn2 = GetTimeToTurn(TurningAngle2_Deg, ptr2->fBaseAngularWheelSpeed) + SafeTurningTime;
-            
+
             DistanceToIntersection2 = CalculateDistance(Robot2IntersectionData->StartPoint, Robot2IntersectionData->IntersectionPoint) +
                                       CalculateDistance(ptr2->StartWaypoint, Robot2IntersectionData->StartPoint);
             TimeFromStartPoint2 = GetTicksToWait(DistanceToIntersection2, ptr2->fLinearWheelSpeed);
-            
+
             TimeToIntersectionRobot2 = TimeFromStartPoint2 + TimeToTurn2 + ptr2->StopTurningTime;
 
             TicksToWaitforSafedistance = (GetTicksToWait(Safedistance , MaxLinearSpeed) + (GetTimeToTurn(180, ptr1->fBaseAngularWheelSpeed)) + SafeTurningTime);
         }
 
+        Time_1Int = TimeToIntersectionRobot1;
+        Time_2Int = TimeToIntersectionRobot2;
+        Timesafe = TicksToWaitforSafedistance;
+
         TimeDiff = abs(TimeToIntersectionRobot1 - TimeToIntersectionRobot2);
+        Difference_Dist = DistanceToIntersection2 - DistanceToIntersection1;
+
+        // collision detection compensation
+        if(Difference_Dist < 0)
+        {
+            Difference_Dist = -1 * Difference_Dist;
+        }
+        else
+        {
+            Difference_Dist = 1 * Difference_Dist;
+        }
+        if(Difference_Dist <= 0.18)
+        {
+           CollisionDetectionTime = 2 * (GetTimeToTurn(37.5, ptr1->fBaseAngularWheelSpeed) + SimulatorTicksperSec);
+        }
+        else
+        {
+            CollisionDetectionTime  = 0;
+        }
 
         if(TimeDiff <= TicksToWaitforSafedistance)
         {
@@ -5154,7 +4832,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
                 if(AdjustedVelocity < ptr1->fLinearWheelSpeed)
                 {
                     AdjustedVelocity = ptr1->fLinearWheelSpeed;;
-                    ptr1->StopTurningTime += ((TimeToIntersection + Bufferime));
+                    ptr1->StopTurningTime += ((TimeToIntersection + Bufferime + CollisionDetectionTime));
 
                 }
 
@@ -5170,7 +4848,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
                 if(AdjustedVelocity < ptr2->fLinearWheelSpeed)
                 {
                     AdjustedVelocity = ptr2->fLinearWheelSpeed;;
-                    ptr2->StopTurningTime += ((TimeToIntersection + Bufferime));
+                    ptr2->StopTurningTime += ((TimeToIntersection + Bufferime + CollisionDetectionTime));
 
                 }
 
@@ -5189,7 +4867,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
                     if(AdjustedVelocity < ptr2->fLinearWheelSpeed)
                     {
                         AdjustedVelocity = ptr2->fLinearWheelSpeed;
-                        ptr2->StopTurningTime += ((TimeToIntersection + Bufferime));
+                        ptr2->StopTurningTime += ((TimeToIntersection + Bufferime + CollisionDetectionTime));
 
                     }
 
@@ -5205,7 +4883,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
                     if(AdjustedVelocity < ptr1->fLinearWheelSpeed)
                     {
                         AdjustedVelocity = ptr1->fLinearWheelSpeed;;
-                        ptr1->StopTurningTime += ((TimeToIntersection + Bufferime));
+                        ptr1->StopTurningTime += ((TimeToIntersection + Bufferime + CollisionDetectionTime));
 
                     }
 
@@ -5213,7 +4891,7 @@ void DSA_loop_functions::IntersectionCollisionCheck(BaseController::RobotData *p
                 } // end of else
 
             }// end of else: add stop time to either of robot by evaluating
-            
+
         }// end of if(TimeDiff < TimeToWaitForSafeDistance)
         
     }// if(Robot1IntersectionData != NULL and Robot2IntersectionData != NULL)

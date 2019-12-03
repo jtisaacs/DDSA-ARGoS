@@ -179,14 +179,29 @@ class DSA_loop_functions : public argos::CLoopFunctions {
     bool Check_CollinearVectors(argos::CVector2 Vec1, argos::CVector2 Vec2, argos::CVector2 Vec3, argos::CVector2 Vec4);
     
     void SortRobotForward(std::vector<argos::UInt8>* ptr, argos::UInt8 size, argos::UInt8 ToNestDirection);
+    void GetRectangleCoordinates(argos::CVector2 StartPoint, argos::CVector2 EndPoint);
+    void ClusterModeOperation();
 //    argos::Real CheckDirection(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
     
 //    argos::CVector2 CalculateWayPoint(BaseController::RobotData *ptr1, BaseController::RobotData *ptr2);
     
     
 //    argos::CVector2 CalculatePointAtDistanceAlongVectorDirection(argos::CVector2 Point1, argos::CVector2 Point2, argos::Real Distance);
-    
+    argos::CVector2 GetWayPointClusterMode(BaseController::RobotData *ptr1);
     public:
+    
+        std::vector<argos::UInt8> CollinearRobots_GoingAwayFromNest;
+        std::vector<argos::UInt8> CollinearRobots_GoingTowardsNest;
+        argos::Real MaxArenaDistance;
+        argos::UInt8 RoboId1;
+        argos::UInt8 RoboId2;
+        argos::CVector2 IntersectionPtCopy1;
+        argos::CVector2 IntersectionPtCopy2;
+        argos::UInt16 Time_1Int;
+        argos::UInt16 Time_2Int;
+        argos::UInt8 IntValue;
+        argos::UInt8 RoboNo;
+        argos::UInt16 Timesafe;
         bool RobotWithWaypt;
         argos::UInt8 GoingAwayNestLeft, WaypointType;
         bool FirstCheck;
@@ -217,6 +232,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         argos::CVector2 IntersectionPointLF;
         argos::UInt16 IntersectionLoopValue;
         argos::UInt8 IntersectionStructIndex;
+    
         argos::UInt8 TestVariable;
         argos::UInt8 TestValue;
         argos::CVector2 TestPoint;
@@ -264,6 +280,9 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         size_t ClusterLengthY;
         size_t PowerRank;
 
+        argos::Real WaypointDistance;
+        argos::Real Rotation_Angle;
+        CVector2 ClusterPos;
 		CVector2 NestPosition;
         CVector2 TargetPoint1;
         CVector2 TargetPoint2;
@@ -336,6 +355,7 @@ class DSA_loop_functions : public argos::CLoopFunctions {
         argos::CRange<argos::Real>   ForageRangeX_1;
         argos::CRange<argos::Real>   ForageRangeY_1;
         argos::Real FOOTBOT_RADIUS   = 0.085036758f;
+        const bool CLUSTERCONFIGONLY = true;
         argos::UInt16 count_start;
         argos::UInt16 count_end;
         argos::UInt16 next_id;

@@ -6,6 +6,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
 #include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 #include <argos3/core/simulator/loop_functions.h>
 //#include <source/DSA/DSA_loop_functions.h>
 #include <cmath>
@@ -48,7 +49,7 @@ class BaseController : public argos::CCI_Controller {
         size_t SimulationTicksPerSecond();
         argos::Real SimulationSecondsPerTick();
         argos::Real SimulationTimeInSeconds();
-    
+        void SortRobotInAscOrder(std::vector<argos::UInt8>* ptr, argos::UInt8 size);
     
     
     
@@ -116,20 +117,13 @@ class BaseController : public argos::CCI_Controller {
             std::vector<char> pattern;
             argos::CVector2 IntersectionPt1;
             argos::CVector2 IntersectionPt2;
-//            argos::CVector3 CrossProduct;
-//            argos::UInt16 IntersectionTime;
-//            argos::CVector3 vect1;
-//            argos::CVector3 vect2;
+
             argos::CRadians Theta;
             argos::Real CosTheta;
-//            argos::UInt8 Inter;
-//            argos::CVector2 PointChange;
-//            argos::CVector2 PointSafe;
             char direction;
             char prevdirection;
             argos::UInt16 CollisionCounter;
             bool CollinearAvoidance;
-//            argos::CRadians AngleTurn;
             std::vector<argos::UInt8>Neighbors;
             argos::UInt8 QuadrantGroup;
             std::vector < std::vector<argos::UInt8> > NeighborsMatrix;
@@ -137,10 +131,11 @@ class BaseController : public argos::CCI_Controller {
             argos::UInt8 cols;
             argos::Real distance;
             argos::UInt8 PreviousCollinearRobotToNest;
-//            std::stack<argos::UInt16>CollinearRobots;
-//            std::stack<argos::UInt16>IntersectingRobots;
-//            argos::CMatrix <>NeighborMatrix;
-
+            std::vector<argos::UInt8> CollinearRobotGoingToNestList;
+            std::vector<argos::UInt8> CollinearRobotGoingAwayNestList;
+            
+            argos::UInt8 CollinearTypeRobo;
+            
         };
     
 //    struct IntersectionData{

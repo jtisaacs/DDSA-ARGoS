@@ -81,7 +81,7 @@
 
 <DDSA PrintFinalScore = "1" FoodItemCount = "64" FoodBoundsWidth="10" FoodBoundsHeight="10"
 FoodDistribution = "1" ResultsPath = "results_Apurva/" NeighborRadius="2.0"
-NestRadius = "0.4"
+NestRadius = "0.4" ClusterCenter = "0,-2.5" RotationAngle = "40" WaypointDist = "0.5"
 />
 <!--  <DDSA PrintFinalScore = "1" FoodItemCount = "256" FoodBoundsWidth="10" FoodBoundsHeight="10"-->
 <!--  FoodDistribution = "1" ResultsPath = "results_Apurva/" NeighborRadius="2.0"-->
@@ -124,14 +124,16 @@ NestRadius = "0.4"
   <!-- ********* -->
   <media />
 
-<!--   ******************-->
-<!--   * Visualization *-->
-<!--   ****************** -->
+   <!-- ****************** -->
+   <!-- * Visualization *  -->
+   <!-- ****************** -->
   <visualization>
     <qt-opengl>
       <camera>
         <placement idx="0" position="  0, 0, 10" look_at="0, 0, 0"  up="0, 1, 0" lens_focal_length="25"/>
         <placement idx="1" position="  0, 0, 4" look_at="0, 0, 0" up="0, 1, 0" lens_focal_length="30"/>
+        <placement idx="2" position="  0, 0, 10" look_at="0, 0, 0" up="1, 1, 0" lens_focal_length="30"/>
+        <placement idx="3" position="0.2,0.1,6" look_at="0.1,0.1,0" lens_focal_length="20" />
       </camera>
       <user_functions label="DSA_qt_user_functions"/>
     </qt-opengl>

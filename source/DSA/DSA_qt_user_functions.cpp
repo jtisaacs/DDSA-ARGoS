@@ -102,7 +102,7 @@ void DSA_qt_user_functions::DrawTargetRays() {
 
         for(size_t j = 0; j < loopFunctions.TargetRayList.size(); j++) {
 
-            DrawRay(loopFunctions.TargetRayList[j], loopFunctions.TargetRayColorList[j]);
+            DrawRay(loopFunctions.TargetRayList[j], loopFunctions.TargetRayColorList[j],1.0);
       
         }
     //}

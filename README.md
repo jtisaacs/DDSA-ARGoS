@@ -8,7 +8,7 @@ Compile the DDSA simulation by running the build.sh script in the root directory
 
 A video of the DDSA running can be found at: https://www.youtube.com/watch?v=lloXmwfT4aE
 
-hanges in the DDSA code for comparing its comparison to PPCA-CCPFA approach:
+Changes in the DDSA code for comparing its comparison to PPCA-CCPFA approach:
 
 1. Nest radius changed to 4 cm
 2. Robot rotation Speed changed to 10 cm/s
